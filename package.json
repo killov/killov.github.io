@@ -15,7 +15,7 @@
     "react-dom": "^17.0.2",
     "rollup-plugin-swc": "^0.2.1",
     "@swc/cli": "^0.1.32",
-    "@swc/core": "^1.2.45",
+    "@swc/core": "^1.2.168",
     "@rollup/plugin-typescript": "^8.3.1",
     "@types/react": "^17.0.33",
     "@types/react-dom": "^17.0.10",
