@@ -1,0 +1,13 @@
+{
+  "index.html": {
+    "file": "assets/index.dfe7d001.js",
+    "src": "index.html",
+    "isEntry": true,
+    "css": [
+      "assets/index.458f9883.css"
+    ],
+    "assets": [
+      "assets/logo.ecc203fb.svg"
+    ]
+  }
+}
