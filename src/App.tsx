@@ -1,5 +1,6 @@
 import React from 'react'
 import style from "./style.module.less";
+import bezec from './bezec.jpg'
 
 
 function App() {
@@ -7,8 +8,9 @@ function App() {
     <div className={style.layout}>
       <div className={style.left}>
         <div className={style.user}>
-            <img src={"https://picsum.photos/id/237/200/300"} className={style.photo}></img>
+            <img src={bezec} className={style.photo}></img>
             <h2 className={style.name}>Zdeněk Mazurák</h2>
+            <h3 className={style.title}>Fullstack web developer</h3>
         </div>
       </div>
     </div>
