@@ -1,5 +1,12 @@
 @text: #c9d1d9;
 
+a {
+    text-decoration: unset;
+}
+a:visited {
+
+}
+
 body {
     background: #161b22;
     :global(#root) {
@@ -37,4 +44,34 @@ body {
             }
         }
     }
+}
+
+.socialBar {
+
+    .socialIcon {
+        margin: 10px;
+        cursor: pointer;
+        font-size: 20px;
+        color: #cccccc;
+        i {
+            color: inherit !important;
+        }
+
+        @keyframes soc-anim {
+            0%   {color: #cccccc;}
+            50%  {color: #ddd;}
+            100% {color: #fff;}
+        }
+
+        &:hover  {
+            animation-name: soc-anim;
+            animation-timing-function: linear;
+            animation-duration: 1s;
+            color: #ffffff;
+        }
+    }
+}
+
+.socialIcon {
+    margin: 5px;
 }
