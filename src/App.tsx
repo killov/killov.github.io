@@ -1,6 +1,8 @@
 import React from 'react'
 import style from "./style.module.less";
 import bezec from './bezec.jpg'
+import up from './up.png'
+import spse from './spse.png'
 import {Icon, IIconProps} from "./icons/icon";
 
 
@@ -20,6 +22,38 @@ function App() {
             </div>
         </div>
       </div>
+        <div className={style.right}>
+            <h2>Education</h2>
+
+            <div className={style.educationTable}>
+                <div className={style.educationTableRow}>
+                    <div className={style.year}>
+                        <div className={style.from}>2019</div>
+                        <div className={style.to}>2015</div>
+                    </div>
+                    <div className={style.logo}>
+                        <img src={up} />
+                    </div>
+                    <div className={style.desc}>
+                        <div className={style.title}>Bc. Informatics</div>
+                        <div className={style.sub}>Palacký University in Olomouc</div>
+                    </div>
+                </div>
+                <div className={style.educationTableRow}>
+                    <div className={style.year}>
+                        <div className={style.from}>2015</div>
+                        <div className={style.to}>2011</div>
+                    </div>
+                    <div className={style.logo}>
+                        <img src={spse} />
+                    </div>
+                    <div className={style.desc}>
+                        <div className={style.title}>Electrotechnics</div>
+                        <div className={style.sub}>VOŠ a SPŠE Olomouc</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
   )
 }

@@ -1,4 +1,5 @@
 @text: #c9d1d9;
+@mobile: ~"screen and (max-width: 800px)";
 
 a {
     text-decoration: unset;
@@ -8,6 +9,7 @@ a:visited {
 }
 
 body {
+    color: @text;
     background: #161b22;
     :global(#root) {
         height: 100vh;
@@ -17,6 +19,12 @@ body {
     display: flex;
     height: 100%;
 
+    @media @mobile {
+        & {
+            flex-direction: column;
+        }
+    }
+
     .left {
         padding-top: 50px;
         align-content: center;
@@ -25,6 +33,13 @@ body {
         background: #0e1117;
         border-right: #383939 1px solid;
         box-sizing: border-box;
+        padding-bottom: 50px;
+        @media @mobile {
+            & {
+                width: 100%;
+                height: auto;
+            }
+        }
 
         .user {
             text-align: center;
@@ -43,6 +58,10 @@ body {
                 font-size: small;
             }
         }
+    }
+
+    .right {
+        padding: 50px;
     }
 }
 
@@ -74,4 +93,42 @@ body {
 
 .socialIcon {
     margin: 5px;
+}
+
+.educationTable {
+    .educationTableRow {
+        margin: 20px;
+        margin-left: 5px;
+        height: 50px;
+        display: flex;
+        .year {
+            margin-right: 10px;
+            font-size: small;
+            .from {
+                padding: 5px;
+            }
+            .to {
+                padding: 5px;
+            }
+        }
+        .logo {
+            width: 50px;
+            flex-shrink: 0;
+            margin-right: 10px;
+            img {
+                width: 50px;
+            }
+        }
+
+        .desc {
+            .title {
+                font-weight: bold;
+            }
+            .sub {
+                font-size: small;
+            }
+            margin: 5px;
+        }
+
+    }
 }
