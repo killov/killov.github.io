@@ -26,36 +26,52 @@ function App() {
             <h2>Education</h2>
 
             <div className={style.educationTable}>
-                <div className={style.educationTableRow}>
-                    <div className={style.year}>
-                        <div className={style.from}>2019</div>
-                        <div className={style.to}>2015</div>
-                    </div>
-                    <div className={style.logo}>
-                        <img src={up} />
-                    </div>
-                    <div className={style.desc}>
-                        <div className={style.title}>Bc. Informatics</div>
-                        <div className={style.sub}>Palacký University in Olomouc</div>
-                    </div>
-                </div>
-                <div className={style.educationTableRow}>
-                    <div className={style.year}>
-                        <div className={style.from}>2015</div>
-                        <div className={style.to}>2011</div>
-                    </div>
-                    <div className={style.logo}>
-                        <img src={spse} />
-                    </div>
-                    <div className={style.desc}>
-                        <div className={style.title}>Electrotechnics</div>
-                        <div className={style.sub}>VOŠ a SPŠE Olomouc</div>
-                    </div>
-                </div>
+                <Radek
+                    fromYear={2019}
+                    toYear={2015}
+                    logoSrc={up}
+                    title={"Bc. Informatics"}
+                    subTitle={"Palacký University in Olomouc"}
+                />
+                <Radek
+                    fromYear={2015}
+                    toYear={2011}
+                    logoSrc={spse}
+                    title={"Electrotechnics"}
+                    subTitle={"VOŠ a SPŠE Olomouc"}
+                />
             </div>
         </div>
     </div>
   )
+}
+
+
+interface IRadekProps {
+    fromYear: number;
+    toYear: number;
+    logoSrc: string;
+    title: string;
+    subTitle: string;
+}
+
+const Radek: React.FC<IRadekProps> = (props) => {
+    return (
+        <div className={style.educationTableRow}>
+            <div className={style.year}>
+                <div className={style.from}>{props.fromYear}</div>
+                <div className={style.to}>{props.toYear}</div>
+            </div>
+            <div className={style.logo}>
+                <img src={props.logoSrc} />
+            </div>
+            <div className={style.desc}>
+                <div className={style.title}>{props.title}</div>
+                <div className={style.sub}>{props.subTitle}</div>
+            </div>
+        </div>
+    );
+
 }
 
 interface ISocialIconProps extends IIconProps {
