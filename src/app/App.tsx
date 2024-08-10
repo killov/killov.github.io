@@ -1,9 +1,11 @@
+"use client"
+
 import React from 'react'
-import style from "./style.module.less";
+import style from './style.module.scss';
 import bezec from './bezec.jpg'
 import up from './up.png'
 import spse from './spse.png'
-import {Icon, IIconProps} from "./icons/icon";
+import {Icon, IIconProps} from "../components/icons/icon";
 
 
 function App() {
@@ -11,7 +13,7 @@ function App() {
     <div className={style.layout}>
       <div className={style.left}>
         <div className={style.user}>
-            <img src={bezec} className={style.photo}></img>
+            <img src={bezec.src} className={style.photo}></img>
             <h2 className={style.name}>Zdeněk Mazurák</h2>
             <h3 className={style.title}>Fullstack web developer</h3>
             <div className={style.socialBar}>
@@ -29,14 +31,14 @@ function App() {
                 <Radek
                     fromYear={2019}
                     toYear={2015}
-                    logoSrc={up}
+                    logoSrc={up.src}
                     title={"Bc. Informatics"}
                     subTitle={"Palacký University in Olomouc"}
                 />
                 <Radek
                     fromYear={2015}
                     toYear={2011}
-                    logoSrc={spse}
+                    logoSrc={spse.src}
                     title={"Electrotechnics"}
                     subTitle={"VOŠ a SPŠE Olomouc"}
                 />

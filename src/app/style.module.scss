@@ -1,25 +1,12 @@
-@text: #c9d1d9;
-@mobile: ~"screen and (max-width: 800px)";
+$text: #c9d1d9;
 
-a {
-    text-decoration: unset;
-}
-a:visited {
 
-}
 
-body {
-    color: @text;
-    background: #161b22;
-    :global(#root) {
-        height: 100vh;
-    }
-}
 .layout {
     display: flex;
     height: 100%;
 
-    @media @mobile {
+    @media screen and (max-width: 800px) {
         & {
             flex-direction: column;
         }
@@ -35,7 +22,7 @@ body {
         border-right: #383939 1px solid;
         box-sizing: border-box;
         padding-bottom: 50px;
-        @media @mobile {
+        @media screen and (max-width: 800px) {
             & {
                 width: 100%;
                 height: auto;
@@ -49,13 +36,13 @@ body {
             }
 
             .name {
-                color: @text;
+                color: $text;
                 margin-bottom: 3px;
             }
 
             .title {
                 margin-top: 0;
-                color: @text;
+                color: $text;
                 font-size: small;
             }
         }

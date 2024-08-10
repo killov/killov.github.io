@@ -1,5 +1,5 @@
 import React from "react";
-import "./icoMoon.less";
+import "./icoMoon.scss";
 
 export interface IIconProps {
     name: string;
@@ -8,3 +8,5 @@ export interface IIconProps {
 export const Icon: React.FC<IIconProps> = (props) => {
     return <i className={"icon-"+props.name} style={{color: "white"}}></i>
 }
+
+export default {};
