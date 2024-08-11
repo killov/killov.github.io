@@ -5,6 +5,8 @@ import style from './style.module.scss';
 import bezec from './bezec.jpg'
 import up from './up.png'
 import spse from './spse.png'
+import quadient from "./img/quadient_logo.jpg"
+import worldee from "./img/worldee_com_logo.jpg"
 import {Icon, IIconProps} from "../components/icons/icon";
 
 
@@ -25,6 +27,25 @@ function App() {
         </div>
       </div>
         <div className={style.right}>
+            <h2>Experience</h2>
+
+            <div className={style.educationTable}>
+                <Radek
+                    fromYear={2024}
+                    toYear={2019}
+                    logoSrc={worldee.src}
+                    title={"Head of Backend"}
+                    subTitle={"Worldee.com"}
+                />
+                <Radek
+                    fromYear={2020}
+                    toYear={2018}
+                    logoSrc={quadient.src}
+                    title={"Software developer"}
+                    subTitle={"Quadient"}
+                />
+            </div>
+
             <h2>Education</h2>
 
             <div className={style.educationTable}>
@@ -65,7 +86,7 @@ const Radek: React.FC<IRadekProps> = (props) => {
                 <div className={style.to}>{props.toYear}</div>
             </div>
             <div className={style.logo}>
-                <img src={props.logoSrc} />
+                <img src={props.logoSrc}/>
             </div>
             <div className={style.desc}>
                 <div className={style.title}>{props.title}</div>
