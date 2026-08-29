@@ -1,300 +1,735 @@
+// === Proměnné ===
 $text: #e6edf3;
-$accent: #58a6ff;
-$accent-hover: #79c0ff;
-$card-bg: rgba(22, 27, 34, 0.6);
-$card-border: rgba(48, 54, 61, 0.8);
-$shadow: rgba(0, 0, 0, 0.3);
+$text-dim: rgba(230, 237, 243, 0.72);
+$text-muted: rgba(230, 237, 243, 0.5);
 
+$bg-1: #0d1117;
+$bg-2: #161b22;
+$bg-3: #1a1f28;
+
+$accent: #58a6ff;        // primární modrá
+$accent-hover: #79c0ff;
+$accent-soft: rgba(88, 166, 255, 0.12);
+
+$accent-2: #bd34fe;      // fialový sekundární akcent (AI)
+$accent-2-soft: rgba(189, 52, 254, 0.16);
+
+$card-bg: rgba(22, 27, 34, 0.55);
+$card-bg-hover: rgba(22, 27, 34, 0.75);
+$card-border: rgba(48, 54, 61, 0.7);
+$card-border-hover: rgba(88, 166, 255, 0.45);
+
+$shadow-1: 0 4px 14px rgba(0, 0, 0, 0.28);
+$shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
+
+// === Layout kontejner ===
 .layout {
+    min-height: 100vh;
+    color: $text;
+    background: linear-gradient(135deg, $bg-1 0%, $bg-2 50%, $bg-3 100%);
+    background-attachment: fixed;
+}
+
+.main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 32px 80px;
     display: flex;
-    height: 100%;
+    flex-direction: column;
+    gap: 96px;
 
     @media screen and (max-width: 800px) {
-        & {
-            flex-direction: column;
-            height: auto;
-            min-height: 100%;
-        }
-    }
-
-    .left {
-        flex-shrink: 0;
-        padding-top: 50px;
-        align-content: center;
-        height: 100%;
-        width: 420px;
-        background: linear-gradient(180deg, rgba(13, 17, 23, 0.95) 0%, rgba(22, 27, 34, 0.9) 100%);
-        backdrop-filter: blur(10px);
-        border-right: 1px solid rgba(48, 54, 61, 0.5);
-        box-sizing: border-box;
-        padding-bottom: 50px;
-        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
-
-        @media screen and (max-width: 800px) {
-            & {
-                width: 100%;
-                height: auto;
-                padding-top: 30px;
-                padding-bottom: 30px;
-                border-right: none;
-                border-bottom: 1px solid rgba(48, 54, 61, 0.5);
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            }
-        }
-
-        .user {
-            text-align: center;
-            animation: fadeIn 0.8s ease-in;
-
-            .photo {
-                height: 280px;
-                border-radius: 50%;
-                border: 4px solid $accent;
-                box-shadow: 0 8px 32px rgba(88, 166, 255, 0.2);
-                transition: all 0.4s ease;
-
-                @media screen and (max-width: 800px) {
-                    height: 200px;
-                }
-
-                &:hover {
-                    transform: scale(1.05);
-                    box-shadow: 0 12px 48px rgba(88, 166, 255, 0.4);
-                }
-            }
-
-            .name {
-                color: $text;
-                margin-bottom: 8px;
-                margin-top: 24px;
-                font-size: 2rem;
-                font-weight: 700;
-                letter-spacing: -0.5px;
-
-                @media screen and (max-width: 800px) {
-                    font-size: 1.5rem;
-                    margin-top: 16px;
-                }
-            }
-
-            .title {
-                margin-top: 0;
-                color: rgba($text, 0.8);
-                font-size: 1.1rem;
-                font-weight: 400;
-                letter-spacing: 0.5px;
-
-                @media screen and (max-width: 800px) {
-                    font-size: 1rem;
-                }
-            }
-        }
-    }
-
-    .right {
-        padding: 60px;
-        overflow-y: auto;
-        flex: 1;
-
-        @media screen and (max-width: 800px) {
-            padding: 30px 20px;
-            overflow-y: visible;
-            flex: none;
-        }
-
-        h2 {
-            color: $text;
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 24px;
-            margin-top: 40px;
-            position: relative;
-            padding-bottom: 12px;
-
-            @media screen and (max-width: 800px) {
-                font-size: 1.5rem;
-                margin-top: 32px;
-                margin-bottom: 20px;
-            }
-
-            &:first-child {
-                margin-top: 0;
-            }
-
-            &::after {
-                content: '';
-                position: absolute;
-                left: 0;
-                bottom: 0;
-                width: 60px;
-                height: 3px;
-                background: linear-gradient(90deg, $accent 0%, transparent 100%);
-                border-radius: 2px;
-            }
-        }
+        padding: 0 20px 60px;
+        gap: 64px;
     }
 }
 
-@keyframes fadeIn {
+// === Top bar s jazykovým přepínačem ===
+.topBar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 32px;
+    backdrop-filter: blur(12px);
+    background: linear-gradient(180deg, rgba(13, 17, 23, 0.7), rgba(13, 17, 23, 0));
+    -webkit-backdrop-filter: blur(12px);
+
+    @media screen and (max-width: 800px) {
+        padding: 12px 20px;
+    }
+}
+
+.langSwitch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(22, 27, 34, 0.6);
+    border: 1px solid $card-border;
+    box-shadow: $shadow-1;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.langBtn {
+    background: transparent;
+    border: 0;
+    color: $text-muted;
+    padding: 4px 6px;
+    cursor: pointer;
+    font: inherit;
+    border-radius: 6px;
+    transition: color 0.2s ease, background 0.2s ease;
+
+    &:hover {
+        color: $text;
+    }
+}
+
+.langBtnActive {
+    color: $accent;
+    background: $accent-soft;
+}
+
+.langDivider {
+    color: rgba(48, 54, 61, 0.8);
+    user-select: none;
+}
+
+// === Hero ===
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 56px;
+    align-items: center;
+    padding-top: 64px;
+
+    @media screen and (max-width: 800px) {
+        grid-template-columns: 1fr;
+        gap: 32px;
+        padding-top: 32px;
+    }
+}
+
+.heroInner {
+    min-width: 0;
+    animation: fadeInUp 0.7s ease both;
+}
+
+.heroName {
+    margin: 0 0 12px;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.05;
+    background: linear-gradient(135deg, $text 0%, $accent 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.heroRole {
+    margin: 0 0 20px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.95rem;
+    color: $accent;
+    letter-spacing: -0.2px;
+}
+
+.heroTagline {
+    margin: 0 0 32px;
+    font-size: 1.1rem;
+    color: $text-dim;
+    max-width: 56ch;
+    line-height: 1.6;
+}
+
+.heroCta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btnPrimary,
+.btnGhost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btnPrimary {
+    background: linear-gradient(135deg, $accent 0%, $accent-2 100%);
+    color: #0d1117;
+    box-shadow: 0 4px 16px rgba(88, 166, 255, 0.3);
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(88, 166, 255, 0.45);
+    }
+}
+
+.btnGhost {
+    color: $text;
+    background: rgba(22, 27, 34, 0.6);
+    border-color: $card-border;
+
+    &:hover {
+        transform: translateY(-2px);
+        border-color: $accent;
+        background: rgba(88, 166, 255, 0.1);
+    }
+}
+
+.heroPhotoWrap {
+    display: flex;
+    justify-content: center;
+    animation: fadeInUp 0.9s ease 0.1s both;
+}
+
+.heroPhoto {
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid $accent;
+    box-shadow: 0 12px 40px rgba(88, 166, 255, 0.25);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+
+    &:hover {
+        transform: scale(1.04);
+        box-shadow: 0 16px 56px rgba(88, 166, 255, 0.45);
+    }
+
+    @media screen and (max-width: 800px) {
+        width: 180px;
+        height: 180px;
+    }
+}
+
+// === Sekce (společné) ===
+.section {
+    scroll-margin-top: 80px;
+}
+
+.h2 {
+    margin: 0 0 8px;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: $text;
+    position: relative;
+    padding-bottom: 12px;
+
+    &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 48px;
+        height: 3px;
+        background: linear-gradient(90deg, $accent 0%, transparent 100%);
+        border-radius: 2px;
+    }
+}
+
+.subtitle {
+    margin: 0 0 32px;
+    color: $text-dim;
+    max-width: 64ch;
+}
+
+// === Reveal animace ===
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.revealed {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+    .heroInner,
+    .heroPhotoWrap {
+        animation: none;
+    }
+    .heroPhoto,
+    .btnPrimary,
+    .btnGhost,
+    .tag,
+    .stackLevel,
+    .projectCard {
+        transition: none;
+    }
+}
+
+// === About ===
+.about {
+    .aboutGrid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        gap: 40px;
+        align-items: start;
+
+        @media screen and (max-width: 800px) {
+            grid-template-columns: 1fr;
+            gap: 28px;
+        }
+    }
+
+    .aboutCopy {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        color: $text-dim;
+        line-height: 1.7;
+        font-size: 1rem;
+    }
+}
+
+.statGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.statCard {
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: $card-bg;
+    border: 1px solid $card-border;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: $shadow-1;
+    transition: border-color 0.3s ease, transform 0.3s ease;
+
+    &:hover {
+        border-color: $accent;
+        transform: translateY(-2px);
+    }
+}
+
+.statValue {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: $text;
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
+
+.statLabel {
+    font-size: 0.8rem;
+    color: $text-muted;
+    letter-spacing: 0.3px;
+}
+
+// === Stack ===
+.stack {
+    .stackGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+    }
+
+    .stackCategory {
+        padding: 22px;
+        border-radius: 16px;
+        background: $card-bg;
+        border: 1px solid $card-border;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        box-shadow: $shadow-1;
+        transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+
+        &:hover {
+            border-color: $card-border-hover;
+            transform: translateY(-3px);
+            box-shadow: $shadow-2;
+        }
+    }
+
+    .stackHeader {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .stackTitle {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: $text;
+    }
+
+    .stackLevel {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 999px;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+    }
+
+    .stackLevelExpert {
+        background: $accent-soft;
+        color: $accent;
+        border: 1px solid rgba(88, 166, 255, 0.4);
+    }
+
+    .stackLevelStrong {
+        background: rgba(189, 52, 254, 0.1);
+        color: rgba(189, 52, 254, 0.95);
+        border: 1px solid rgba(189, 52, 254, 0.3);
+    }
+}
+
+.tagWrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(13, 17, 23, 0.6);
+    border: 1px solid $card-border;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.78rem;
+    color: $text-dim;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    cursor: default;
+
+    &:hover {
+        border-color: $accent;
+        background: $accent-soft;
+        color: $text;
+        transform: scale(1.05);
+    }
+}
+
+// === Projects ===
+.projects {
+    .projectsGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+    }
+}
+
+.projectCard {
+    padding: 24px;
+    border-radius: 16px;
+    background: $card-bg;
+    border: 1px solid $card-border;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: $shadow-1;
+    transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+
+    &:hover {
+        border-color: $card-border-hover;
+        transform: translateY(-4px);
+        box-shadow: $shadow-2;
+        background: $card-bg-hover;
+    }
+}
+
+.projectHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.projectTitle {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: $text;
+    letter-spacing: -0.3px;
+}
+
+.projectKind {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.projectKindWork {
+    background: rgba(63, 185, 80, 0.12);
+    color: #7ee787;
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.projectKindOss {
+    background: $accent-soft;
+    color: $accent;
+    border: 1px solid rgba(88, 166, 255, 0.4);
+}
+
+.projectKindAi {
+    background: $accent-2-soft;
+    color: rgba(189, 52, 254, 0.95);
+    border: 1px solid rgba(189, 52, 254, 0.3);
+}
+
+.projectDesc {
+    margin: 0;
+    color: $text-dim;
+    line-height: 1.55;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+.projectLink {
+    color: $accent;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+
+    &:hover {
+        color: $accent-hover;
+    }
+}
+
+// === Experience & Education timeline ===
+.experience,
+.education {
+    .timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+}
+
+.timelineRow {
+    display: grid;
+    grid-template-columns: 140px 64px minmax(0, 1fr);
+    align-items: start;
+    gap: 20px;
+    padding: 20px;
+    background: $card-bg;
+    border: 1px solid $card-border;
+    border-radius: 16px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: $shadow-1;
+    transition: border-color 0.3s ease, transform 0.3s ease, background 0.3s ease;
+
+    &:hover {
+        border-color: $card-border-hover;
+        transform: translateX(4px);
+        background: $card-bg-hover;
+
+        @media screen and (max-width: 800px) {
+            transform: translateY(-2px);
+        }
+    }
+
+    @media screen and (max-width: 800px) {
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 12px;
+        padding: 16px;
+    }
+}
+
+.timelineYear {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.8rem;
+    color: $text-muted;
+    font-weight: 600;
+
+    @media screen and (max-width: 800px) {
+        grid-column: 1 / 2;
+        grid-row: 1 / 3;
+        font-size: 0.7rem;
+        writing-mode: horizontal-tb;
+    }
+}
+
+.timelineYearTo {
+    color: $text-dim;
+    margin-top: 4px;
+
+    @media screen and (max-width: 800px) {
+        margin-top: 2px;
+    }
+}
+
+.timelineLogo {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 8px;
+    box-sizing: border-box;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+    @media screen and (max-width: 800px) {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+.timelineBody {
+    min-width: 0;
+}
+
+.timelineTitle {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: $text;
+    margin-bottom: 2px;
+}
+
+.timelineCompany {
+    font-size: 0.9rem;
+    color: $accent;
+    margin-bottom: 8px;
+}
+
+.timelineDesc {
+    margin: 0;
+    color: $text-dim;
+    line-height: 1.55;
+    font-size: 0.92rem;
+
+    @media screen and (max-width: 800px) {
+        font-size: 0.88rem;
+    }
+}
+
+// === Contact ===
+.contact {
+    .subtitle {
+        margin: 0 auto 32px;
+        text-align: center;
+    }
+
+    .contactGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+    }
+}
+
+.contactCard {
+    padding: 22px;
+    border-radius: 16px;
+    background: $card-bg;
+    border: 1px solid $card-border;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: $shadow-1;
+    transition: border-color 0.3s ease, transform 0.3s ease, background 0.3s ease;
+
+    &:hover {
+        border-color: $card-border-hover;
+        transform: translateY(-3px);
+        background: $card-bg-hover;
+    }
+}
+
+.contactLabel {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.75rem;
+    color: $text-muted;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.contactValues {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.contactValue {
+    color: $text;
+    font-size: 0.95rem;
+}
+
+.contactLink {
+    color: $text;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+    word-break: break-all;
+
+    &:hover {
+        color: $accent;
+    }
+}
+
+// === Footer ===
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 32px;
+    border-top: 1px solid rgba(48, 54, 61, 0.5);
+    color: $text-muted;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.3px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.footerMeta {
+    color: $accent;
+}
+
+// === Klíčové snímky ===
+@keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(16px);
     }
     to {
         opacity: 1;
         transform: translateY(0);
-    }
-}
-
-.socialBar {
-    margin-top: 24px;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-
-    .socialIcon {
-        margin: 0;
-        cursor: pointer;
-        font-size: 24px;
-        color: rgba($text, 0.7);
-        width: 48px;
-        height: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        background: rgba(48, 54, 61, 0.3);
-        border: 1px solid rgba(48, 54, 61, 0.5);
-        transition: all 0.3s ease;
-
-        i {
-            color: inherit !important;
-        }
-
-        &:hover {
-            color: $accent-hover;
-            background: rgba(88, 166, 255, 0.15);
-            border-color: $accent;
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(88, 166, 255, 0.3);
-        }
-    }
-}
-
-.socialIcon {
-    margin: 0;
-}
-
-.educationTable {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-
-    .educationTableRow {
-        margin: 0;
-        padding: 20px;
-        background: $card-bg;
-        backdrop-filter: blur(10px);
-        border: 1px solid $card-border;
-        border-radius: 16px;
-        min-height: 80px;
-        display: flex;
-        align-items: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-
-        @media screen and (max-width: 800px) {
-            padding: 16px;
-            flex-wrap: wrap;
-        }
-
-        &:hover {
-            transform: translateX(8px);
-            border-color: $accent;
-            background: rgba(22, 27, 34, 0.8);
-            box-shadow: 0 8px 24px rgba(88, 166, 255, 0.15);
-
-            @media screen and (max-width: 800px) {
-                transform: translateY(-4px);
-            }
-        }
-
-        .year {
-            margin-right: 20px;
-            font-size: 0.85rem;
-            color: rgba($text, 0.7);
-            font-weight: 600;
-            min-width: 60px;
-
-            @media screen and (max-width: 800px) {
-                min-width: 50px;
-                margin-right: 12px;
-                font-size: 0.8rem;
-            }
-
-            .from {
-                padding: 4px 0;
-            }
-            .to {
-                padding: 4px 0;
-                &::before {
-                    content: '↓';
-                    margin-right: 4px;
-                    color: $accent;
-                }
-            }
-        }
-
-        .logo {
-            width: 64px;
-            height: 64px;
-            flex-shrink: 0;
-            margin-right: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 8px;
-            box-sizing: border-box;
-
-            @media screen and (max-width: 800px) {
-                width: 52px;
-                height: 52px;
-                margin-right: 12px;
-            }
-
-            img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-                border-radius: 8px;
-            }
-        }
-
-        .desc {
-            margin: 0;
-            flex: 1;
-
-            .title {
-                font-weight: 600;
-                font-size: 1.1rem;
-                color: $text;
-                margin-bottom: 4px;
-
-                @media screen and (max-width: 800px) {
-                    font-size: 1rem;
-                }
-            }
-
-            .sub {
-                font-size: 0.95rem;
-                color: rgba($text, 0.7);
-
-                @media screen and (max-width: 800px) {
-                    font-size: 0.85rem;
-                }
-            }
-        }
     }
 }

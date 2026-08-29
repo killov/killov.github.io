@@ -1,113 +1,354 @@
 "use client"
 
-import React from 'react'
+import React, {useEffect, useRef} from "react"
 import style from './style.module.scss';
 import bezec from './bezec.jpg'
-import up from './up.png'
-import spse from './spse.png'
-import quadient from "./img/quadient_logo.jpg"
-import worldee from "./img/worldee_com_logo.jpg"
-import {Icon, IIconProps} from "../components/icons/icon";
+import worldeeLogo from "./img/worldee_com_logo.jpg"
+import quadientLogo from "./img/quadient_logo.jpg"
+import upLogo from './up.png'
+import spseLogo from './spse.png'
+import {LanguageProvider, useLanguage} from "./LanguageContext";
+import {Lang} from "./i18n";
+import {
+    about,
+    education,
+    experience,
+    profile,
+    projects,
+    stack,
+} from "./data/profile";
 
+/**
+ * Hook: animuje reveal sekcí při scrollu.
+ * Sleduje IntersectionObserver a přidává třídu `style.revealed`, jakmile
+ * je sekce aspoň 10 % vidět. Respektuje `prefers-reduced-motion`.
+ */
+function useRevealOnScroll(): React.RefObject<HTMLDivElement> {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const node = ref.current;
+        if (!node) return;
+        const prefersReducedMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+        ).matches;
+        if (prefersReducedMotion) {
+            node.classList.add(style.revealed);
+            return;
+        }
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add(style.revealed);
+                        observer.unobserve(entry.target);
+                    }
+                }
+            },
+            {threshold: 0.1},
+        );
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, []);
+
+    return ref;
+}
+
+const RevealSection: React.FC<{children: React.ReactNode; className?: string}> = ({children, className}) => {
+    const ref = useRevealOnScroll();
+    return (
+        <section
+            ref={ref}
+            className={`${style.section} ${className ?? ""} ${style.reveal}`}
+        >
+            {children}
+        </section>
+    );
+};
+
+const LangSwitch: React.FC = () => {
+    const {lang, setLang} = useLanguage();
+    const onPick = (next: Lang) => () => setLang(next);
+    return (
+        <div className={style.langSwitch} role="group" aria-label="Language">
+            <button
+                type="button"
+                className={`${style.langBtn} ${lang === "cs" ? style.langBtnActive : ""}`}
+                onClick={onPick("cs")}
+                aria-pressed={lang === "cs"}
+            >
+                CZ
+            </button>
+            <span className={style.langDivider} aria-hidden="true">|</span>
+            <button
+                type="button"
+                className={`${style.langBtn} ${lang === "en" ? style.langBtnActive : ""}`}
+                onClick={onPick("en")}
+                aria-pressed={lang === "en"}
+            >
+                EN
+            </button>
+        </div>
+    );
+};
+
+const Hero: React.FC = () => {
+    const {t} = useLanguage();
+    return (
+        <section className={style.hero}>
+            <div className={style.heroInner}>
+                <h1 className={style.heroName}>Zdeněk Mazurák</h1>
+                <p className={style.heroRole}>{t("hero.role")}</p>
+                <p className={style.heroTagline}>{t("hero.tagline")}</p>
+                <div className={style.heroCta}>
+                    <a className={style.btnPrimary} href={`mailto:${profile.emails[0]}`}>
+                        {t("hero.cta.contact")}
+                    </a>
+                    <a
+                        className={style.btnGhost}
+                        href={profile.github}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        {t("hero.cta.github")} →
+                    </a>
+                </div>
+            </div>
+            <div className={style.heroPhotoWrap}>
+                <img src={bezec.src} className={style.heroPhoto} alt="Zdeněk Mazurák"/>
+            </div>
+        </section>
+    );
+};
+
+const About: React.FC = () => {
+    const {t} = useLanguage();
+    return (
+        <RevealSection className={style.about}>
+            <h2 className={style.h2}>{t("about.title")}</h2>
+            <div className={style.aboutGrid}>
+                <div className={style.aboutCopy}>
+                    <p>{t(about.paragraphKeys[0])}</p>
+                    <p>{t(about.paragraphKeys[1])}</p>
+                </div>
+                <div className={style.statGrid}>
+                    {about.stats.map((stat) => (
+                        <div key={stat.labelKey} className={style.statCard}>
+                            <div className={style.statValue}>{stat.value}</div>
+                            <div className={style.statLabel}>{t(stat.labelKey)}</div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </RevealSection>
+    );
+};
+
+const Stack: React.FC = () => {
+    const {t} = useLanguage();
+    return (
+        <RevealSection className={style.stack}>
+            <h2 className={style.h2}>{t("stack.title")}</h2>
+            <p className={style.subtitle}>{t("stack.subtitle")}</p>
+            <div className={style.stackGrid}>
+                {stack.map((cat) => (
+                    <div key={cat.titleKey} className={style.stackCategory}>
+                        <div className={style.stackHeader}>
+                            <h3 className={style.stackTitle}>{t(cat.titleKey)}</h3>
+                            <span
+                                className={`${style.stackLevel} ${cat.level === "expert" ? style.stackLevelExpert : style.stackLevelStrong}`}
+                            >
+                                {t(cat.level === "expert" ? "stack.level.expert" : "stack.level.strong")}
+                            </span>
+                        </div>
+                        <div className={style.tagWrap}>
+                            {cat.tags.map((tag) => (
+                                <span key={tag} className={style.tag}>{tag}</span>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </RevealSection>
+    );
+};
+
+const Projects: React.FC = () => {
+    const {t} = useLanguage();
+    return (
+        <RevealSection className={style.projects}>
+            <h2 className={style.h2}>{t("projects.title")}</h2>
+            <p className={style.subtitle}>{t("projects.subtitle")}</p>
+            <div className={style.projectsGrid}>
+                {projects.map((p) => (
+                    <article key={p.title} className={style.projectCard}>
+                        <div className={style.projectHeader}>
+                            <h3 className={style.projectTitle}>{p.title}</h3>
+                            <span
+                                className={`${style.projectKind} ${p.kind === "work" ? style.projectKindWork : p.kind === "oss" ? style.projectKindOss : style.projectKindAi}`}
+                            >
+                                {t(p.kind === "work" ? "projects.kind.work" : p.kind === "oss" ? "projects.kind.oss" : "projects.kind.ai")}
+                            </span>
+                        </div>
+                        <p className={style.projectDesc}>{t(p.descKey)}</p>
+                        <div className={style.tagWrap}>
+                            {p.tags.map((tag) => (
+                                <span key={tag} className={style.tag}>{tag}</span>
+                            ))}
+                        </div>
+                        {p.href && (
+                            <a
+                                className={style.projectLink}
+                                href={p.href}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                {t("projects.visit")} →
+                            </a>
+                        )}
+                    </article>
+                ))}
+            </div>
+        </RevealSection>
+    );
+};
+
+const ExperienceTimeline: React.FC = () => {
+    const {t, lang} = useLanguage();
+    const presentLabel = t("common.present");
+    const fromLabel = t("common.from");
+    const toLabel = t("common.to");
+    return (
+        <RevealSection className={style.experience}>
+            <h2 className={style.h2}>{t("experience.title")}</h2>
+            <div className={style.timeline}>
+                {experience.map((entry) => (
+                    <div key={entry.company} className={style.timelineRow}>
+                        <div className={style.timelineYear}>
+                            <div>{fromLabel} {entry.from}</div>
+                            <div className={style.timelineYearTo}>
+                                {toLabel} {entry.to ?? presentLabel}
+                            </div>
+                        </div>
+                        <div className={style.timelineLogo}>
+                            <img
+                                src={entry.company === "Worldee.com" ? worldeeLogo.src : quadientLogo.src}
+                                alt={entry.logoAlt}
+                            />
+                        </div>
+                        <div className={style.timelineBody}>
+                            <div className={style.timelineTitle}>{entry.title}</div>
+                            <div className={style.timelineCompany}>{entry.company}</div>
+                            <p className={style.timelineDesc}>{t(entry.descKey)}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </RevealSection>
+    );
+};
+
+const EducationTimeline: React.FC = () => {
+    const {t} = useLanguage();
+    return (
+        <RevealSection className={style.education}>
+            <h2 className={style.h2}>{t("education.title")}</h2>
+            <div className={style.timeline}>
+                {education.map((entry) => (
+                    <div key={entry.school} className={style.timelineRow}>
+                        <div className={style.timelineYear}>
+                            <div>{entry.from} – {entry.to}</div>
+                        </div>
+                        <div className={style.timelineLogo}>
+                            <img
+                                src={entry.school.includes("Palackého") ? upLogo.src : spseLogo.src}
+                                alt={entry.school}
+                            />
+                        </div>
+                        <div className={style.timelineBody}>
+                            <div className={style.timelineTitle}>{entry.title}</div>
+                            <div className={style.timelineCompany}>{entry.school}</div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </RevealSection>
+    );
+};
+
+const Contact: React.FC = () => {
+    const {t} = useLanguage();
+    return (
+        <RevealSection className={style.contact}>
+            <h2 className={style.h2}>{t("contact.title")}</h2>
+            <p className={style.subtitle}>{t("contact.subtitle")}</p>
+            <div className={style.contactGrid}>
+                <div className={style.contactCard}>
+                    <div className={style.contactLabel}>{t("contact.email.label")}</div>
+                    <div className={style.contactValues}>
+                        {profile.emails.map((email) => (
+                            <a key={email} className={style.contactLink} href={`mailto:${email}`}>
+                                {email}
+                            </a>
+                        ))}
+                    </div>
+                </div>
+                <div className={style.contactCard}>
+                    <div className={style.contactLabel}>{t("contact.github.label")}</div>
+                    <a className={style.contactLink} href={profile.github} target="_blank" rel="noreferrer">
+                        github.com/killov →
+                    </a>
+                </div>
+                <div className={style.contactCard}>
+                    <div className={style.contactLabel}>{t("contact.linkedin.label")}</div>
+                    <a className={style.contactLink} href={profile.linkedin} target="_blank" rel="noreferrer">
+                        LinkedIn →
+                    </a>
+                </div>
+                <div className={style.contactCard}>
+                    <div className={style.contactLabel}>{t("contact.location.label")}</div>
+                    <div className={style.contactValue}>{t("contact.location.value")}</div>
+                </div>
+            </div>
+        </RevealSection>
+    );
+};
+
+const TopBar: React.FC = () => {
+    return (
+        <div className={style.topBar}>
+            <LangSwitch/>
+        </div>
+    );
+};
+
+function AppInner() {
+    return (
+        <div className={style.layout}>
+            <TopBar/>
+            <main className={style.main}>
+                <Hero/>
+                <About/>
+                <Stack/>
+                <Projects/>
+                <ExperienceTimeline/>
+                <EducationTimeline/>
+                <Contact/>
+                <footer className={style.footer}>
+                    <span>© Zdeněk Mazurák · {new Date().getFullYear()}</span>
+                    <span className={style.footerMeta}>killov.github.io</span>
+                </footer>
+            </main>
+        </div>
+    );
+}
 
 function App() {
-  return (
-    <div className={style.layout}>
-      <div className={style.left}>
-        <div className={style.user}>
-            <img src={bezec.src} className={style.photo}></img>
-            <h2 className={style.name}>Zdeněk Mazurák</h2>
-            <h3 className={style.title}>Fullstack web developer</h3>
-            <div className={style.socialBar}>
-                <SocialIcon name={"facebook"} link={"https://www.facebook.com/zdenek.mazurak.56"} />
-                <SocialIcon name={"instagram"} link={"https://www.instagram.com/killovcz/"} />
-                <SocialIcon name={"linkedin"} link={"https://www.linkedin.com/in/zden%C4%9Bk-mazur%C3%A1k-582972162/"} />
-                <SocialIcon name={"github"} link={"https://github.com/killov"} />
-            </div>
-        </div>
-      </div>
-        <div className={style.right}>
-            <h2>Experience</h2>
-
-            <div className={style.educationTable}>
-                <Radek
-                    fromYear={2024}
-                    toYear={2019}
-                    logoSrc={worldee.src}
-                    title={"Head of Backend"}
-                    subTitle={"Worldee.com"}
-                />
-                <Radek
-                    fromYear={2020}
-                    toYear={2018}
-                    logoSrc={quadient.src}
-                    title={"Software developer"}
-                    subTitle={"Quadient"}
-                />
-            </div>
-
-            <h2>Education</h2>
-
-            <div className={style.educationTable}>
-                <Radek
-                    fromYear={2019}
-                    toYear={2015}
-                    logoSrc={up.src}
-                    title={"Bc. Informatics"}
-                    subTitle={"Palacký University in Olomouc"}
-                />
-                <Radek
-                    fromYear={2015}
-                    toYear={2011}
-                    logoSrc={spse.src}
-                    title={"Electrotechnics"}
-                    subTitle={"VOŠ a SPŠE Olomouc"}
-                />
-            </div>
-        </div>
-    </div>
-  )
-}
-
-
-interface IRadekProps {
-    fromYear: number;
-    toYear: number;
-    logoSrc: string;
-    title: string;
-    subTitle: string;
-}
-
-const Radek: React.FC<IRadekProps> = (props) => {
     return (
-        <div className={style.educationTableRow}>
-            <div className={style.year}>
-                <div className={style.from}>{props.fromYear}</div>
-                <div className={style.to}>{props.toYear}</div>
-            </div>
-            <div className={style.logo}>
-                <img src={props.logoSrc}/>
-            </div>
-            <div className={style.desc}>
-                <div className={style.title}>{props.title}</div>
-                <div className={style.sub}>{props.subTitle}</div>
-            </div>
-        </div>
+        <LanguageProvider>
+            <AppInner/>
+        </LanguageProvider>
     );
-
-}
-
-interface ISocialIconProps extends IIconProps {
-    link: string;
-}
-
-const SocialIcon: React.FC<ISocialIconProps> = (props) => {
-    return (
-        <a className={style.socialIcon} href={props.link} target={"_blank"}>
-            <Icon {...props}  />
-        </a>
-    );
-
 }
 
 export default App
