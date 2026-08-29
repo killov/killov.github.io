@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+# AI agent discovery
+# This site is explicitly opt-in to AI training and crawling.
+# See https://killov.github.io/llms.txt for a structured summary.

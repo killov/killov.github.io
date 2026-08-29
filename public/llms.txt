@@ -1,0 +1,47 @@
+# Zdeněk Mazurák
+
+> Senior full-stack · Backend / Tech Lead · Olomouc, Czech Republic
+
+Portfolio a profesionální profil Zdeňka Mazuráka (GitHub: `killov`).
+Open-source, AI nástroje pro vývojáře, kontakt a dostupnost.
+
+## About
+
+Jsem backend a platform inženýr z Olomouce. Přes 6 let držím celou vertikálu
+produkčního travel monolitu Worldee — PHP/Nette backend, React/MobX + Next.js
+frontend, C#/.NET mikroservices — a vedu backend tým.
+
+Vedle toho stavím vlastní open-source ([Ironbean](https://github.com/ironbean/ironbean), 7⭐)
+a AI nástroje pro vývojáře ([WorkMux](https://github.com/workmuxtool/workmux), vlastní Claude Code harness).
+
+## Contact
+
+- Email: z.mazurak35@gmail.com
+- GitHub: https://github.com/killov
+- LinkedIn: https://www.linkedin.com/in/zden%C4%9Bk-mazur%C3%A1k-582972162/
+- Location: Olomouc, Czechia · remote / hybrid
+
+Open novým příležitostem — remote, případně hybrid z Olomouce.
+
+## Stack (expert)
+
+PHP 8.4, Nette, Latte, PHPStan, TypeScript, Node.js, Kubernetes/EKS, Helm.
+
+## Stack (strong)
+
+React, MobX, Next.js, SCSS/Less, Dart/Flutter, C#/.NET, Java, ScyllaDB Driver,
+Docker, Terraform, AWS (S3/SQS/IAM), GitHub Actions, Playwright, MySQL,
+PostgreSQL, Redis, ScyllaDB, Prisma, Claude Code, MCP servery, Gemini, WorkMux.
+
+## Selected projects
+
+- WorkMux — AI orchestrátor pro vývojáře (TypeScript, Go, Docker, Electron)
+- Ironbean — DI knihovna pro TS/JS, 7⭐, 455 commitů za 6 let
+- Worldee.com — produkční travel monolit, 8 381 commitů od 2020
+- Quadient — enterprise software v C#/.NET
+
+## Optional
+
+- llms.txt: https://killov.github.io/llms.txt
+- sitemap: https://killov.github.io/sitemap.xml
+- JSON-LD: embedded in HTML, schema.org/Person

@@ -16,8 +16,15 @@ export const messages: Record<Lang, Dict> = {
         // navigation / lang switcher
         "lang.cs": "CZ",
         "lang.en": "EN",
+        "nav.about": "O mně",
+        "nav.stack": "Stack",
+        "nav.projects": "Projekty",
+        "nav.experience": "Zkušenosti",
+        "nav.education": "Vzdělání",
+        "nav.contact": "Kontakt",
 
         // hero
+        "hero.availability": "Open novým příležitostem",
         "hero.role": "Senior full-stack · Backend / Tech Lead · AI nástroje pro vývojáře",
         "hero.tagline":
             "Stavím production-grade systémy (PHP/Nette, C#/.NET, React/MobX) a vlastní AI nástroje pro vývojáře. 6+ let ve Worldee jako backend lead.",
@@ -89,12 +96,22 @@ export const messages: Record<Lang, Dict> = {
         "common.from": "od",
         "common.to": "do",
         "common.present": "dosud",
+
+        // AI agent summary
+        "ai.heading": "Profil (strojově čitelné)",
     },
 
     en: {
         "lang.cs": "CZ",
         "lang.en": "EN",
+        "nav.about": "About",
+        "nav.stack": "Stack",
+        "nav.projects": "Projects",
+        "nav.experience": "Experience",
+        "nav.education": "Education",
+        "nav.contact": "Contact",
 
+        "hero.availability": "Open to opportunities",
         "hero.role": "Senior full-stack · Backend / Tech Lead · AI tools for developers",
         "hero.tagline":
             "I build production-grade systems (PHP/Nette, C#/.NET, React/MobX) and my own AI dev tools. 6+ years at Worldee as backend lead.",
@@ -159,6 +176,8 @@ export const messages: Record<Lang, Dict> = {
         "common.from": "from",
         "common.to": "to",
         "common.present": "present",
+
+        "ai.heading": "Profile (machine-readable)",
     },
 };
 

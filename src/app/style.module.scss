@@ -1,26 +1,34 @@
-// === Proměnné ===
+// === Dark tech-pro theme ===
+// Původní směr: modrá + fialová, glass karty, gradient text. Větší typografie a čistší spacing.
+
 $text: #e6edf3;
-$text-dim: rgba(230, 237, 243, 0.72);
+$text-dim: rgba(230, 237, 243, 0.74);
 $text-muted: rgba(230, 237, 243, 0.5);
 
-$bg-1: #0d1117;
-$bg-2: #161b22;
-$bg-3: #1a1f28;
+$bg-1: #0a0d14;
+$bg-2: #11151f;
+$bg-3: #161b28;
 
-$accent: #58a6ff;        // primární modrá
+$accent: #58a6ff;
 $accent-hover: #79c0ff;
-$accent-soft: rgba(88, 166, 255, 0.12);
+$accent-soft: rgba(88, 166, 255, 0.14);
 
-$accent-2: #bd34fe;      // fialový sekundární akcent (AI)
-$accent-2-soft: rgba(189, 52, 254, 0.16);
+$accent-2: #bd34fe;
+$accent-2-soft: rgba(189, 52, 254, 0.18);
 
-$card-bg: rgba(22, 27, 34, 0.55);
-$card-bg-hover: rgba(22, 27, 34, 0.75);
-$card-border: rgba(48, 54, 61, 0.7);
+$card-bg: rgba(17, 21, 31, 0.55);
+$card-bg-hover: rgba(22, 27, 40, 0.75);
+$card-border: rgba(48, 54, 64, 0.7);
 $card-border-hover: rgba(88, 166, 255, 0.45);
 
-$shadow-1: 0 4px 14px rgba(0, 0, 0, 0.28);
-$shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
+$good: #7ee787;
+$good-soft: rgba(126, 231, 135, 0.12);
+
+$shadow-1: 0 4px 16px rgba(0, 0, 0, 0.3);
+$shadow-2: 0 14px 40px rgba(0, 0, 0, 0.5);
+
+$sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+$mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
 // === Layout kontejner ===
 .layout {
@@ -28,6 +36,8 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     color: $text;
     background: linear-gradient(135deg, $bg-1 0%, $bg-2 50%, $bg-3 100%);
     background-attachment: fixed;
+    position: relative;
+    overflow-x: hidden;
 }
 
 .main {
@@ -44,20 +54,31 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     }
 }
 
+.visuallyHidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 // === Top bar s jazykovým přepínačem ===
 .topBar {
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 10;
+    right: 0;
+    z-index: 20;
     display: flex;
     justify-content: flex-end;
-    padding: 16px 32px;
-    backdrop-filter: blur(12px);
-    background: linear-gradient(180deg, rgba(13, 17, 23, 0.7), rgba(13, 17, 23, 0));
-    -webkit-backdrop-filter: blur(12px);
+    padding: 18px 28px;
+    pointer-events: none;
 
-    @media screen and (max-width: 800px) {
-        padding: 12px 20px;
+    > * {
+        pointer-events: auto;
     }
 }
 
@@ -67,12 +88,14 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     gap: 6px;
     padding: 6px 12px;
     border-radius: 999px;
-    background: rgba(22, 27, 34, 0.6);
+    background: rgba(10, 13, 20, 0.7);
     border: 1px solid $card-border;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     box-shadow: $shadow-1;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 0.85rem;
-    letter-spacing: 0.5px;
+    font-family: $mono;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
 }
 
 .langBtn {
@@ -96,56 +119,176 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 }
 
 .langDivider {
-    color: rgba(48, 54, 61, 0.8);
+    color: rgba(48, 54, 64, 0.8);
     user-select: none;
+}
+
+// === Navigace ===
+.nav {
+    position: fixed;
+    top: 18px;
+    left: 28px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 6px 14px 6px 6px;
+    border-radius: 999px;
+    background: rgba(10, 13, 20, 0.7);
+    border: 1px solid $card-border;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: $shadow-1;
+
+    @media screen and (max-width: 800px) {
+        left: 12px;
+        right: 12px;
+        top: 70px;
+        gap: 12px;
+        padding: 6px 12px;
+    }
+}
+
+.navBrand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    font-family: $mono;
+    font-size: 0.85rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, $accent 0%, $accent-2 100%);
+    color: #0a0d14;
+    transition: transform 0.2s ease;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+
+    &:hover {
+        transform: translateY(-1px);
+    }
+}
+
+.navBrandMark {
+    font-weight: 700;
+    opacity: 0.7;
+}
+
+.navBrandName {
+    letter-spacing: 0.4px;
+}
+
+.navList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 4px;
+
+    @media screen and (max-width: 800px) {
+        overflow-x: auto;
+        scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; }
+    }
+}
+
+.navList li {
+    display: inline-flex;
+}
+
+.navLink {
+    display: inline-block;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    color: $text-dim;
+    text-decoration: none;
+    border-radius: 999px;
+    transition: color 0.2s ease, background 0.2s ease;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+
+    &:hover {
+        color: $text;
+        background: $card-bg-hover;
+    }
 }
 
 // === Hero ===
 .hero {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 280px;
-    gap: 56px;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 64px;
     align-items: center;
-    padding-top: 64px;
+    padding: 120px 0 40px;
+    min-height: 80vh;
 
     @media screen and (max-width: 800px) {
         grid-template-columns: 1fr;
-        gap: 32px;
-        padding-top: 32px;
+        gap: 40px;
+        padding: 140px 0 24px;
+        min-height: auto;
+        text-align: left;
     }
 }
 
 .heroInner {
     min-width: 0;
-    animation: fadeInUp 0.7s ease both;
+    animation: fadeInUp 0.8s ease both;
+}
+
+.heroEyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 24px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: $card-bg;
+    border: 1px solid $card-border;
+    color: $text-dim;
+    font-family: $mono;
+    font-size: 0.78rem;
+    letter-spacing: 0.4px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.heroDot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: $good;
+    box-shadow: 0 0 10px rgba(126, 231, 135, 0.7);
+    animation: pulse 2.4s ease-in-out infinite;
 }
 
 .heroName {
-    margin: 0 0 12px;
-    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    margin: 0 0 16px;
+    font-size: clamp(2.6rem, 7vw, 4.6rem);
     font-weight: 800;
-    letter-spacing: -1px;
-    line-height: 1.05;
-    background: linear-gradient(135deg, $text 0%, $accent 100%);
+    letter-spacing: -0.035em;
+    line-height: 1;
+    background: linear-gradient(135deg, $text 0%, $accent 60%, $accent-2 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .heroRole {
-    margin: 0 0 20px;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 0.95rem;
+    margin: 0 0 24px;
+    font-family: $mono;
+    font-size: 0.9rem;
     color: $accent;
-    letter-spacing: -0.2px;
+    letter-spacing: 0.3px;
+    max-width: 60ch;
 }
 
 .heroTagline {
-    margin: 0 0 32px;
+    margin: 0 0 40px;
     font-size: 1.1rem;
     color: $text-dim;
-    max-width: 56ch;
-    line-height: 1.6;
+    max-width: 52ch;
+    line-height: 1.65;
 }
 
 .heroCta {
@@ -158,44 +301,47 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 .btnGhost {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 12px 22px;
+    gap: 8px;
+    padding: 13px 22px;
     border-radius: 999px;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     text-decoration: none;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     border: 1px solid transparent;
+    letter-spacing: 0.1px;
 }
 
 .btnPrimary {
     background: linear-gradient(135deg, $accent 0%, $accent-2 100%);
-    color: #0d1117;
-    box-shadow: 0 4px 16px rgba(88, 166, 255, 0.3);
+    color: #0a0d14;
+    box-shadow: 0 4px 18px rgba(88, 166, 255, 0.3);
 
     &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(88, 166, 255, 0.45);
+        box-shadow: 0 10px 28px rgba(88, 166, 255, 0.45);
     }
 }
 
 .btnGhost {
     color: $text;
-    background: rgba(22, 27, 34, 0.6);
+    background: $card-bg;
     border-color: $card-border;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 
     &:hover {
         transform: translateY(-2px);
         border-color: $accent;
-        background: rgba(88, 166, 255, 0.1);
+        background: $accent-soft;
     }
 }
 
 .heroPhotoWrap {
     display: flex;
     justify-content: center;
-    animation: fadeInUp 0.9s ease 0.1s both;
+    animation: fadeInUp 1s ease 0.15s both;
 }
 
 .heroPhoto {
@@ -203,13 +349,16 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     height: 280px;
     border-radius: 50%;
     object-fit: cover;
-    border: 4px solid $accent;
-    box-shadow: 0 12px 40px rgba(88, 166, 255, 0.25);
+    border: 3px solid transparent;
+    background-image: linear-gradient(#0a0d14, #0a0d14), linear-gradient(135deg, $accent, $accent-2);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    box-shadow: 0 20px 60px rgba(88, 166, 255, 0.25);
     transition: transform 0.4s ease, box-shadow 0.4s ease;
 
     &:hover {
         transform: scale(1.04);
-        box-shadow: 0 16px 56px rgba(88, 166, 255, 0.45);
+        box-shadow: 0 24px 70px rgba(189, 52, 254, 0.4);
     }
 
     @media screen and (max-width: 800px) {
@@ -220,41 +369,57 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 
 // === Sekce (společné) ===
 .section {
-    scroll-margin-top: 80px;
+    scroll-margin-top: 100px;
+}
+
+.sectionHead {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.sectionIndex {
+    font-family: $mono;
+    font-size: 0.85rem;
+    color: $accent;
+    letter-spacing: 1.5px;
+    font-weight: 600;
 }
 
 .h2 {
-    margin: 0 0 8px;
-    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    margin: 0;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
     font-weight: 700;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.025em;
     color: $text;
     position: relative;
-    padding-bottom: 12px;
+    padding-bottom: 14px;
 
     &::after {
-        content: '';
+        content: "";
         position: absolute;
         left: 0;
         bottom: 0;
         width: 48px;
         height: 3px;
-        background: linear-gradient(90deg, $accent 0%, transparent 100%);
+        background: linear-gradient(90deg, $accent 0%, $accent-2 100%);
         border-radius: 2px;
     }
 }
 
 .subtitle {
-    margin: 0 0 32px;
+    margin: -8px 0 32px;
     color: $text-dim;
-    max-width: 64ch;
+    max-width: 60ch;
+    font-size: 1.02rem;
+    line-height: 1.6;
 }
 
-// === Reveal animace ===
 .reveal {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
 }
 
 .revealed {
@@ -272,12 +437,19 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     .heroPhotoWrap {
         animation: none;
     }
+    .heroDot {
+        animation: none;
+    }
     .heroPhoto,
     .btnPrimary,
     .btnGhost,
     .tag,
     .stackLevel,
-    .projectCard {
+    .projectCard,
+    .statCard,
+    .contactCard,
+    .timelineRow,
+    .stackCategory {
         transition: none;
     }
 }
@@ -286,23 +458,24 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 .about {
     .aboutGrid {
         display: grid;
-        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-        gap: 40px;
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+        gap: 56px;
         align-items: start;
 
         @media screen and (max-width: 800px) {
             grid-template-columns: 1fr;
-            gap: 28px;
+            gap: 36px;
         }
     }
 
     .aboutCopy {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 18px;
         color: $text-dim;
         line-height: 1.7;
-        font-size: 1rem;
+        font-size: 1.04rem;
+        max-width: 58ch;
     }
 }
 
@@ -310,37 +483,42 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+    margin: 0;
 }
 
 .statCard {
-    padding: 18px 20px;
+    padding: 22px 24px;
     border-radius: 14px;
     background: $card-bg;
     border: 1px solid $card-border;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow: $shadow-1;
-    transition: border-color 0.3s ease, transform 0.3s ease;
+    transition: border-color 0.3s ease, transform 0.3s ease, background 0.3s ease;
 
     &:hover {
         border-color: $accent;
         transform: translateY(-2px);
+        background: $card-bg-hover;
     }
 }
 
 .statValue {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 1.8rem;
+    font-family: $mono;
+    font-size: 1.9rem;
     font-weight: 700;
     color: $text;
-    line-height: 1.1;
-    margin-bottom: 4px;
+    line-height: 1;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
 }
 
 .statLabel {
-    font-size: 0.8rem;
+    margin: 0;
+    font-family: $mono;
+    font-size: 0.72rem;
     color: $text-muted;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
 }
 
 // === Stack ===
@@ -348,23 +526,24 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     .stackGrid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 18px;
+        gap: 16px;
     }
 
     .stackCategory {
-        padding: 22px;
+        padding: 24px;
         border-radius: 16px;
         background: $card-bg;
         border: 1px solid $card-border;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         box-shadow: $shadow-1;
-        transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+        transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 
         &:hover {
             border-color: $card-border-hover;
             transform: translateY(-3px);
             box-shadow: $shadow-2;
+            background: $card-bg-hover;
         }
     }
 
@@ -373,23 +552,24 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        margin-bottom: 14px;
+        margin-bottom: 16px;
     }
 
     .stackTitle {
         margin: 0;
-        font-size: 1rem;
+        font-size: 1.05rem;
         font-weight: 600;
         color: $text;
     }
 
     .stackLevel {
-        font-family: 'JetBrains Mono', ui-monospace, monospace;
-        font-size: 0.7rem;
-        padding: 3px 8px;
+        font-family: $mono;
+        font-size: 0.65rem;
+        padding: 3px 9px;
         border-radius: 999px;
-        letter-spacing: 0.4px;
+        letter-spacing: 0.6px;
         text-transform: uppercase;
+        font-weight: 600;
     }
 
     .stackLevelExpert {
@@ -399,7 +579,7 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     }
 
     .stackLevelStrong {
-        background: rgba(189, 52, 254, 0.1);
+        background: $accent-2-soft;
         color: rgba(189, 52, 254, 0.95);
         border: 1px solid rgba(189, 52, 254, 0.3);
     }
@@ -408,25 +588,27 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 .tagWrap {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
 .tag {
-    padding: 5px 11px;
-    border-radius: 999px;
-    background: rgba(13, 17, 23, 0.6);
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: rgba(10, 13, 20, 0.6);
     border: 1px solid $card-border;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 0.78rem;
+    font-family: $mono;
+    font-size: 0.76rem;
     color: $text-dim;
     transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.2s ease;
-    cursor: default;
 
     &:hover {
         border-color: $accent;
         background: $accent-soft;
         color: $text;
-        transform: scale(1.05);
+        transform: scale(1.04);
     }
 }
 
@@ -434,18 +616,18 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 .projects {
     .projectsGrid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
     }
 }
 
 .projectCard {
-    padding: 24px;
+    padding: 26px;
     border-radius: 16px;
     background: $card-bg;
     border: 1px solid $card-border;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow: $shadow-1;
     transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
     display: flex;
@@ -462,33 +644,35 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 
 .projectHeader {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
 }
 
 .projectTitle {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: $text;
-    letter-spacing: -0.3px;
+    letter-spacing: -0.015em;
 }
 
 .projectKind {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 0.7rem;
+    font-family: $mono;
+    font-size: 0.65rem;
     padding: 4px 10px;
     border-radius: 999px;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.6px;
     text-transform: uppercase;
     white-space: nowrap;
+    flex-shrink: 0;
+    font-weight: 600;
 }
 
 .projectKindWork {
-    background: rgba(63, 185, 80, 0.12);
-    color: #7ee787;
-    border: 1px solid rgba(63, 185, 80, 0.3);
+    background: $good-soft;
+    color: $good;
+    border: 1px solid rgba(126, 231, 135, 0.3);
 }
 
 .projectKindOss {
@@ -506,7 +690,7 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 .projectDesc {
     margin: 0;
     color: $text-dim;
-    line-height: 1.55;
+    line-height: 1.6;
     font-size: 0.95rem;
     flex: 1;
 }
@@ -517,6 +701,7 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     font-weight: 600;
     font-size: 0.9rem;
     transition: color 0.2s ease;
+    align-self: flex-start;
 
     &:hover {
         color: $accent-hover;
@@ -529,21 +714,24 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     .timeline {
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 12px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
     }
 }
 
 .timelineRow {
     display: grid;
-    grid-template-columns: 140px 64px minmax(0, 1fr);
-    align-items: start;
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: 120px 56px minmax(0, 1fr);
+    align-items: center;
+    gap: 24px;
+    padding: 20px 24px;
     background: $card-bg;
     border: 1px solid $card-border;
-    border-radius: 16px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    border-radius: 14px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow: $shadow-1;
     transition: border-color 0.3s ease, transform 0.3s ease, background 0.3s ease;
 
@@ -558,57 +746,46 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     }
 
     @media screen and (max-width: 800px) {
-        grid-template-columns: 52px minmax(0, 1fr);
-        gap: 12px;
+        grid-template-columns: 48px minmax(0, 1fr);
+        gap: 14px;
         padding: 16px;
     }
 }
 
 .timelineYear {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 0.8rem;
+    font-family: $mono;
+    font-size: 0.78rem;
     color: $text-muted;
     font-weight: 600;
+    letter-spacing: 0.3px;
 
-    @media screen and (max-width: 800px) {
-        grid-column: 1 / 2;
-        grid-row: 1 / 3;
-        font-size: 0.7rem;
-        writing-mode: horizontal-tb;
+    time {
+        color: $text-dim;
     }
 }
 
-.timelineYearTo {
-    color: $text-dim;
-    margin-top: 4px;
-
-    @media screen and (max-width: 800px) {
-        margin-top: 2px;
-    }
+.timelinePresent {
+    color: $good;
 }
 
 .timelineLogo {
-    width: 64px;
-    height: 64px;
+    width: 48px;
+    height: 48px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    padding: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid $card-border;
+    border-radius: 10px;
+    padding: 6px;
     box-sizing: border-box;
 
     img {
         width: 100%;
         height: 100%;
         object-fit: contain;
-        border-radius: 8px;
-    }
-
-    @media screen and (max-width: 800px) {
-        width: 48px;
-        height: 48px;
+        border-radius: 6px;
     }
 }
 
@@ -620,47 +797,43 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     font-weight: 600;
     font-size: 1.05rem;
     color: $text;
-    margin-bottom: 2px;
+    margin: 0 0 2px;
 }
 
 .timelineCompany {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: $accent;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .timelineDesc {
     margin: 0;
     color: $text-dim;
-    line-height: 1.55;
+    line-height: 1.6;
     font-size: 0.92rem;
-
-    @media screen and (max-width: 800px) {
-        font-size: 0.88rem;
-    }
 }
 
 // === Contact ===
 .contact {
     .subtitle {
-        margin: 0 auto 32px;
-        text-align: center;
+        margin: -8px 0 32px;
+        max-width: 60ch;
     }
 
     .contactGrid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 14px;
+        gap: 12px;
     }
 }
 
 .contactCard {
-    padding: 22px;
-    border-radius: 16px;
+    padding: 24px;
+    border-radius: 14px;
     background: $card-bg;
     border: 1px solid $card-border;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     box-shadow: $shadow-1;
     transition: border-color 0.3s ease, transform 0.3s ease, background 0.3s ease;
 
@@ -672,10 +845,10 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 }
 
 .contactLabel {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 0.75rem;
+    font-family: $mono;
+    font-size: 0.7rem;
     color: $text-muted;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
     margin-bottom: 10px;
 }
@@ -703,17 +876,30 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
     }
 }
 
+// === AI summary (strojově čitelný) ===
+.aiSummary {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 // === Footer ===
 .footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding-top: 32px;
-    border-top: 1px solid rgba(48, 54, 61, 0.5);
+    border-top: 1px solid rgba(48, 54, 64, 0.5);
     color: $text-muted;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 0.8rem;
-    letter-spacing: 0.3px;
+    font-family: $mono;
+    font-size: 0.78rem;
+    letter-spacing: 0.4px;
     flex-wrap: wrap;
     gap: 12px;
 }
@@ -726,10 +912,15 @@ $shadow-2: 0 12px 36px rgba(0, 0, 0, 0.45);
 @keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: translateY(16px);
+        transform: translateY(20px);
     }
     to {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
 }
