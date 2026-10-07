@@ -4,7 +4,7 @@
  */
 
 export type StackLevel = "expert" | "strong";
-export type ProjectKind = "work" | "oss" | "ai";
+export type ProjectKind = "work" | "oss" | "ai" | "game";
 
 export interface ProfileLinks {
     emails: string[];
@@ -14,6 +14,8 @@ export interface ProfileLinks {
 }
 
 export interface StatCard {
+    /** id 3D vizualizace (about-<id>) */
+    id: string;
     value: string;
     /** klíč do i18n — krátký popisek pod číslem */
     labelKey: string;
@@ -26,6 +28,8 @@ export interface AboutCopy {
 }
 
 export interface StackCategory {
+    /** id 3D vizualizace (stack-<id>) */
+    id: string;
     /** klíč do i18n (title) */
     titleKey: string;
     level: StackLevel;
@@ -52,6 +56,8 @@ export interface ExperienceEntry {
     company: string;
     /** klíč do i18n — popis role (1–2 věty) */
     descKey: string;
+    /** místo ve 3D městě (data/places.ts) */
+    placeId: string;
 }
 
 export interface EducationEntry {
@@ -60,14 +66,11 @@ export interface EducationEntry {
     logoSrc: string;
     title: string;
     school: string;
+    placeId: string;
 }
 
 export const profile: ProfileLinks = {
-    emails: [
-        "z.mazurak35@gmail.com",
-        "z.mazurak@seznam.cz",
-        "zdenek.mazurak@worldee.com",
-    ],
+    emails: ["z.mazurak35@gmail.com"],
     github: "https://github.com/killov",
     linkedin: "https://www.linkedin.com/in/zden%C4%9Bk-mazur%C3%A1k-582972162/",
     location: "Olomouc, Česko",
@@ -76,15 +79,16 @@ export const profile: ProfileLinks = {
 export const about: AboutCopy = {
     paragraphKeys: ["about.p1", "about.p2"],
     stats: [
-        {value: "6+", labelKey: "about.stat.years"},
-        {value: "~35", labelKey: "about.stat.repos"},
-        {value: "8 381", labelKey: "about.stat.commits"},
-        {value: "7⭐", labelKey: "about.stat.stars"},
+        {id: "years", value: "6+", labelKey: "about.stat.years"},
+        {id: "repos", value: "~35", labelKey: "about.stat.repos"},
+        {id: "commits", value: "8 381", labelKey: "about.stat.commits"},
+        {id: "stars", value: "7⭐", labelKey: "about.stat.stars"},
     ],
 };
 
 export const stack: StackCategory[] = [
     {
+        id: "backend",
         titleKey: "stack.cat.backend",
         level: "expert",
         tags: [
@@ -94,31 +98,34 @@ export const stack: StackCategory[] = [
             "PHPStan",
             "TypeScript",
             "Node.js",
-            "Kubernetes/EKS",
-            "Helm",
         ],
     },
     {
+        id: "frontend",
         titleKey: "stack.cat.frontend",
         level: "strong",
         tags: ["React", "MobX", "Next.js", "SCSS/Less", "Dart/Flutter"],
     },
     {
+        id: "lang",
         titleKey: "stack.cat.lang",
         level: "strong",
-        tags: ["C#/.NET", "Java", "ScyllaDB Driver", "TypeScript"],
+        tags: ["C#/.NET", "Java", "TypeScript"],
     },
     {
+        id: "ai",
         titleKey: "stack.cat.ai",
         level: "strong",
         tags: ["Claude Code", "MCP servery", "Gemini", "WorkMux"],
     },
     {
+        id: "infra",
         titleKey: "stack.cat.infra",
         level: "strong",
         tags: ["Docker", "Terraform", "AWS (S3/SQS/IAM)", "GitHub Actions", "Playwright"],
     },
     {
+        id: "db",
         titleKey: "stack.cat.db",
         level: "strong",
         tags: ["MySQL", "PostgreSQL", "Redis", "ScyllaDB", "Prisma"],
@@ -141,10 +148,24 @@ export const projects: Project[] = [
         href: "https://github.com/ironbean/ironbean",
     },
     {
+        // soukromé repo killov/onlinegames — bez odkazu
+        title: "OverCup",
+        kind: "game",
+        descKey: "projects.overcup.desc",
+        tags: ["Next.js 15", "React 19", "socket.io", "Redis", "MySQL"],
+    },
+    {
+        title: "ArmyGame",
+        kind: "game",
+        descKey: "projects.armygame.desc",
+        tags: ["PHP", "JavaScript", "WebSocket", "WebGL", "MySQL"],
+        href: "https://github.com/killov/armygame",
+    },
+    {
         title: "Worldee",
         kind: "work",
         descKey: "projects.worldee.desc",
-        tags: ["PHP/Nette", "React", "C#/.NET", "Stripe", "ScyllaDB", "Helm"],
+        tags: ["PHP/Nette", "React", "C#/.NET", "Stripe", "ScyllaDB"],
         href: "https://github.com/Worldee-com/web_react-php",
     },
     {
@@ -161,9 +182,10 @@ export const experience: ExperienceEntry[] = [
         to: null,
         logoSrc: "/worldee_com_logo.jpg",
         logoAlt: "Worldee",
-        title: "Backend / Tech Lead",
+        title: "Senior Backend Developer",
         company: "Worldee.com",
         descKey: "experience.worldee.desc",
+        placeId: "worldee",
     },
     {
         from: 2018,
@@ -173,6 +195,7 @@ export const experience: ExperienceEntry[] = [
         title: "Software Developer",
         company: "Quadient",
         descKey: "experience.quadient.desc",
+        placeId: "quadient",
     },
 ];
 
@@ -183,6 +206,7 @@ export const education: EducationEntry[] = [
         logoSrc: "/up.png",
         title: "Bc. Informatika",
         school: "Univerzita Palackého v Olomouci",
+        placeId: "up",
     },
     {
         from: 2011,
@@ -190,5 +214,6 @@ export const education: EducationEntry[] = [
         logoSrc: "/spse.png",
         title: "Elektrotechnika",
         school: "VOŠ a SPŠE Olomouc",
+        placeId: "spse",
     },
 ];

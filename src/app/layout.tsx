@@ -2,9 +2,9 @@ import "./App.css";
 import type {Metadata, Viewport} from "next";
 
 const SITE_URL = "https://killov.github.io";
-const SITE_TITLE = "Zdeněk Mazurák — Senior full-stack · Backend / Tech Lead";
+const SITE_TITLE = "Zdeněk Mazurák — Senior full-stack · Backend";
 const SITE_DESCRIPTION =
-    "Senior full-stack a backend lead z Olomouce. PHP/Nette, C#/.NET, React/MobX, Next.js. Staví AI nástroje pro vývojáře. Open-source Ironbean (7⭐). 6+ let v produkci.";
+    "Senior full-stack a backend vývojář z Olomouce. PHP/Nette, C#/.NET, React/MobX, Next.js. Staví AI nástroje pro vývojáře. Open-source Ironbean (7⭐). 6+ let v produkci.";
 
 export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
@@ -20,8 +20,7 @@ export const metadata: Metadata = {
         "Zdeněk Mazurák",
         "killov",
         "full-stack developer",
-        "backend lead",
-        "tech lead",
+        "backend developer",
         "PHP",
         "Nette",
         "C#",
@@ -30,7 +29,6 @@ export const metadata: Metadata = {
         "MobX",
         "Next.js",
         "TypeScript",
-        "Kubernetes",
         "AI tools for developers",
         "WorkMux",
         "Ironbean",
@@ -106,7 +104,7 @@ const jsonLd = {
     alternateName: "killov",
     url: SITE_URL,
     image: `${SITE_URL}/bezec.jpg`,
-    jobTitle: "Senior full-stack · Backend / Tech Lead",
+    jobTitle: "Senior full-stack · Backend",
     description: SITE_DESCRIPTION,
     email: "mailto:z.mazurak35@gmail.com",
     address: {
@@ -127,16 +125,16 @@ const jsonLd = {
         "C#", ".NET", "ASP.NET",
         "TypeScript", "JavaScript", "Node.js",
         "React", "MobX", "Next.js", "SCSS",
-        "Kubernetes", "Helm", "Docker", "Terraform",
+        "Docker", "Terraform",
         "AWS", "GitHub Actions", "Playwright",
         "MySQL", "PostgreSQL", "Redis", "ScyllaDB", "Prisma",
         "Stripe", "Gemini AI",
         "Claude Code", "MCP servers", "AI dev tools",
-        "Software architecture", "Backend engineering", "Tech leadership",
+        "Software architecture", "Backend engineering",
     ],
     hasOccupation: {
         "@type": "Occupation",
-        name: "Backend / Tech Lead",
+        name: "Senior Backend Developer",
         occupationLocation: {
             "@type": "City",
             name: "Olomouc, Czech Republic",
@@ -145,7 +143,6 @@ const jsonLd = {
             "PHP/Nette backend",
             "C#/.NET microservices",
             "React/MobX frontend",
-            "Kubernetes / Helm",
             "AI tooling",
         ],
         experienceRequirements: "6+ years",

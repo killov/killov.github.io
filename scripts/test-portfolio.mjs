@@ -1,7 +1,7 @@
 // Rychlý e2e smoke test pro redesign.
 // Spustí se přes `node scripts/test-portfolio.mjs` proti běžícímu dev serveru.
-// Ověří: render všech sekcí, CZ/EN přepnutí, žádné konzolové errory,
-//         viewport desktop + mobil.
+// Ověří: 3D scénu, let po všech zastávkách (navigace i klávesnice), obsah,
+//         CZ/EN přepnutí, žádné konzolové errory, viewport desktop + mobil.
 
 import {chromium} from "playwright";
 import {writeFileSync, mkdirSync} from "node:fs";
@@ -10,7 +10,8 @@ const URL = "http://localhost:3000/";
 const OUT = "/tmp/portfolio-shots";
 mkdirSync(OUT, {recursive: true});
 
-const browser = await chromium.launch();
+// WebGL i v headless (softwarový renderer)
+const browser = await chromium.launch({args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"]});
 const consoleErrors = [];
 
 async function check(label, fn) {
@@ -24,7 +25,7 @@ async function check(label, fn) {
     }
 }
 
-await check("desktop render + i18n + sekce", async () => {
+await check("desktop: let po zastávkách + obsah + i18n", async () => {
     const ctx = await browser.newContext({viewport: {width: 1440, height: 900}});
     const page = await ctx.newPage();
     page.on("console", (msg) => {
@@ -33,74 +34,121 @@ await check("desktop render + i18n + sekce", async () => {
     page.on("pageerror", (err) => consoleErrors.push(`[desktop pageerror] ${err.message}`));
     await page.goto(URL, {waitUntil: "networkidle"});
 
-    // Hero
-    await page.locator("h1").first().waitFor({timeout: 5000});
-    const heroText = await page.locator("h1").first().innerText();
-    if (!heroText.includes("Zdeněk Mazurák")) {
-        throw new Error(`Hero neobsahuje jméno: "${heroText}"`);
-    }
+    // Hero (po boot sekvenci)
+    await page.locator("h1", {hasText: "Zdeněk Mazurák"}).waitFor({state: "visible", timeout: 8000});
 
-    // Všechny sekce
+    // 3D scéna běží
+    const hasGl = await page.locator("canvas").evaluate((c) => !!(c.getContext("webgl2") || c.getContext("webgl")));
+    if (!hasGl) throw new Error("Canvas nemá WebGL kontext");
+
+    // Každá sekce: klik v navigaci → kamera doletí → panel s nadpisem je vidět
     const sections = ["O mně", "Stack", "Co stavím", "Zkušenosti", "Vzdělání", "Kontakt"];
-    for (const s of sections) {
-        const el = page.getByRole("heading", {name: s, level: 2});
-        if (!(await el.count())) throw new Error(`Chybí sekce "${s}"`);
+    for (const [i, name] of sections.entries()) {
+        await page.locator("nav a").nth(i + 1).click();
+        await page.getByRole("heading", {name, level: 2}).waitFor({state: "visible", timeout: 6000});
     }
 
-    // Stack — alespoň PHP 8.4 tag
-    const phpTag = await page.locator("text=/^PHP 8.4$/").count();
-    if (phpTag < 1) throw new Error("Chybí PHP 8.4 tag ve Stack");
+    // Klávesnice: Home → start, PageDown → O mně
+    await page.keyboard.press("Home");
+    await page.locator("h1").waitFor({state: "visible", timeout: 6000});
+    await page.keyboard.press("PageDown");
+    await page.getByRole("heading", {name: "O mně", level: 2}).waitFor({state: "visible", timeout: 6000});
 
-    // Stack — TypeScript je v expert kategorii (Backend & runtime)
-    const tsTag = page.locator("text=/^TypeScript$/");
-    if ((await tsTag.count()) < 1) throw new Error("Chybí TypeScript tag");
-
-    // Stack — Kubernetes/EKS je v expert kategorii (Backend & runtime)
-    const k8sTag = page.locator("text=/^Kubernetes\\/EKS$/");
-    if ((await k8sTag.count()) < 1) throw new Error("Chybí Kubernetes/EKS tag");
-
-    // Stack — Dapper je pryč
-    const dapperTag = page.locator("text=/^Dapper$/");
-    if ((await dapperTag.count()) > 0) throw new Error("Dapper by neměl být přítomen");
-
-    // Stack — Java je přítomná
-    const javaTag = page.locator("text=/^Java$/");
-    if ((await javaTag.count()) < 1) throw new Error("Chybí Java tag");
-
-    // Projects — Worldee + WorkMux
-    const workmux = await page.locator("h3", {hasText: "WorkMux"}).count();
-    const worldee = await page.locator("h3", {hasText: "Worldee"}).count();
-    if (workmux < 1 || worldee < 1) {
-        throw new Error(`Chybí projektová karta: workmux=${workmux} worldee=${worldee}`);
+    // Obsah (je v DOM i když panel zrovna není vidět)
+    if ((await page.locator("text=/^PHP 8.4$/").count()) < 1) throw new Error("Chybí PHP 8.4 tag ve Stack");
+    if ((await page.locator("text=/^Java$/").count()) < 1) throw new Error("Chybí Java tag");
+    for (const gone of ["Kubernetes/EKS", "Helm", "ScyllaDB Driver", "Dapper"]) {
+        if ((await page.getByText(gone, {exact: true}).count()) > 0) {
+            throw new Error(`${gone} by neměl být přítomen`);
+        }
     }
+    for (const title of ["WorkMux", "Worldee", "ArmyGame", "OverCup"]) {
+        if ((await page.locator("h3", {hasText: title}).count()) < 1) throw new Error(`Chybí projekt ${title}`);
+    }
+    if ((await page.locator('a[href*="Worldee-com/web_react-php"]').count()) < 1) throw new Error("Chybí GitHub link u Worldee");
+    const mailtos = await page.locator('a[href^="mailto:"]').evaluateAll((els) => els.map((a) => a.getAttribute("href")));
+    if (!mailtos.length || mailtos.some((href) => href !== "mailto:z.mazurak35@gmail.com")) {
+        throw new Error(`Očekávám jen Gmail, mám ${mailtos.join(", ")}`);
+    }
+    if ((await page.getByText(/7 000 Kč/).count()) < 1) throw new Error("Chybí sazba 7 000 Kč");
 
-    // Worldee má odkaz na GitHub
-    const worldeeLink = page.locator('a[href*="Worldee-com/web_react-php"]').count();
-    if (worldeeLink < 1) throw new Error("Chybí GitHub link u Worldee");
+    // Projekt → 3D hologram s popisem, Esc ho zavře
+    await page.locator("nav a").nth(3).click();
+    await page.locator("article").first().getByRole("button", {name: /Ukázat ve 3D/}).waitFor({state: "visible", timeout: 6000});
+    await page.locator("article").first().getByRole("button", {name: /Ukázat ve 3D/}).click();
+    const dialog = page.getByRole("dialog", {name: "WorkMux"});
+    await dialog.waitFor({state: "visible", timeout: 3000});
+    await page.screenshot({path: `${OUT}/desktop-showcase.png`});
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({state: "detached", timeout: 3000});
 
-    // Kontakt — 3 e-maily (plus 1 v hero CTA = 4 celkem)
-    const mailto = await page.locator('a[href^="mailto:"]').count();
-    if (mailto < 3) throw new Error(`Očekávám alespoň 3 e-maily, mám ${mailto}`);
+    // Stack: klik na kategorii → 3D vizualizace
+    await page.locator("nav a").nth(2).click();
+    await page.locator('[data-stack="frontend"]').waitFor({state: "visible", timeout: 6000});
+    await page.locator('[data-stack="frontend"]').click();
+    const stackDialog = page.getByRole("dialog", {name: "Frontend"});
+    await stackDialog.waitFor({state: "visible", timeout: 3000});
+    await page.screenshot({path: `${OUT}/desktop-stack-3d.png`});
+    await page.getByRole("button", {name: /Zavřít/}).click();
+    await stackDialog.waitFor({state: "detached", timeout: 3000});
 
-    await page.screenshot({path: `${OUT}/desktop-cz.png`, fullPage: true});
+    // O mně: kartička se statistikou → 3D vizualizace
+    await page.locator("nav a").nth(1).click();
+    await page.getByRole("button", {name: /hvězd na Ironbean/}).waitFor({state: "visible", timeout: 6000});
+    await page.getByRole("button", {name: /hvězd na Ironbean/}).click();
+    const starsDialog = page.getByRole("dialog", {name: "7 hvězd"});
+    await starsDialog.waitFor({state: "visible", timeout: 3000});
+    await page.keyboard.press("Escape");
+    await starsDialog.waitFor({state: "detached", timeout: 3000});
 
-    // Přepnutí na EN
+    // Vesmírná hra: vstup, hod Zemí, raketa, návrat
+    await page.getByRole("button", {name: "Hra", exact: true}).click();
+    const gameUi = page.getByRole("dialog", {name: /Mise/});
+    await gameUi.waitFor({state: "visible", timeout: 3000});
+    await page.waitForTimeout(2500);
+    await page.mouse.move(720, 450);
+    await page.mouse.down();
+    await page.mouse.move(580, 680, {steps: 8});
+    await page.mouse.up();
+    await page.waitForFunction(() => document.body.innerText.includes("HODY") && /HODY\s+1/i.test(document.body.innerText), null, {timeout: 4000});
+    await page.screenshot({path: `${OUT}/desktop-game.png`});
+    await page.keyboard.press("Escape");
+    await gameUi.waitFor({state: "detached", timeout: 3000});
+    if ((await page.evaluate(() => document.documentElement.style.overflow)) !== "") throw new Error("Po hře zůstal zamčený scroll");
+
+    // Vzdělání: klik na školu → přiblížení na Zemi → 3D město s budovou, jízda autem
+    await page.locator("nav a").nth(5).click();
+    await page.locator('[data-place="up"]').waitFor({state: "visible", timeout: 6000});
+    await page.locator('[data-place="up"]').click();
+    const cityUi = page.getByRole("dialog", {name: /Přírodovědecká fakulta/});
+    await cityUi.waitFor({state: "visible", timeout: 3000});
+    await page.getByRole("button", {name: /Řídit auto/}).waitFor({state: "visible", timeout: 15000});
+    await page.getByRole("button", {name: /Řídit auto/}).click();
+    await page.keyboard.down("ArrowUp");
+    await page.waitForTimeout(1500);
+    await page.keyboard.up("ArrowUp");
+    await page.screenshot({path: `${OUT}/desktop-city.png`});
+    await page.keyboard.press("Escape");
+    await cityUi.waitFor({state: "detached", timeout: 3000});
+    await page.locator("nav a").nth(1).click();
+    await page.getByRole("heading", {name: "O mně", level: 2}).waitFor({state: "visible", timeout: 6000});
+
+    // Tažení po Zemi ji otočí (telemetrie se nemění, ale nesmí to spadnout ani scrollovat)
+    const scrollBefore = await page.evaluate(() => window.scrollY);
+    await page.mouse.move(1150, 450);
+    await page.mouse.down();
+    await page.mouse.move(1300, 430, {steps: 6});
+    await page.mouse.up();
+    if (Math.abs((await page.evaluate(() => window.scrollY)) - scrollBefore) > 2) throw new Error("Tažení Zemí scrolluje stránku");
+
+    await page.screenshot({path: `${OUT}/desktop-cz.png`});
+
+    // Přepnutí na EN a zpět
     await page.getByRole("button", {name: "EN", exact: true}).click();
-    await page.waitForTimeout(200);
-
-    const aboutEn = await page.locator("h2", {hasText: "About"}).count();
-    if (aboutEn < 1) throw new Error("Po přepnutí na EN chybí 'About'");
-
-    const stackEn = await page.locator("h2", {hasText: "Stack"}).count();
-    if (stackEn < 1) throw new Error("Po přepnutí na EN chybí 'Stack'");
-
-    await page.screenshot({path: `${OUT}/desktop-en.png`, fullPage: true});
-
-    // Zpět na CZ
+    await page.getByRole("heading", {name: "About", level: 2}).waitFor({state: "visible", timeout: 3000});
+    await page.screenshot({path: `${OUT}/desktop-en.png`});
     await page.getByRole("button", {name: "CZ", exact: true}).click();
-    await page.waitForTimeout(200);
-    const aboutCz = await page.locator("h2", {hasText: "O mně"}).count();
-    if (aboutCz < 1) throw new Error("Po přepnutí zpět na CZ chybí 'O mně'");
+    await page.getByRole("heading", {name: "O mně", level: 2}).waitFor({state: "visible", timeout: 3000});
 
     await ctx.close();
 });
@@ -113,8 +161,8 @@ await check("mobilní viewport", async () => {
     });
     await page.goto(URL, {waitUntil: "networkidle"});
 
-    await page.locator("h1").first().waitFor({timeout: 5000});
-    await page.screenshot({path: `${OUT}/mobile-cz.png`, fullPage: true});
+    await page.locator("h1").first().waitFor({state: "visible", timeout: 8000});
+    await page.screenshot({path: `${OUT}/mobile-cz.png`});
     await ctx.close();
 });
 

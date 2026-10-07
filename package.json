@@ -13,12 +13,14 @@
     "ironbean": "^1.0.7",
     "ironbean-react": "^1.0.1",
     "less": "^4.1.2",
-    "sharp": "^0.33.4"
+    "sharp": "^0.33.4",
+    "three": "^0.170.0"
   },
   "devDependencies": {
     "@types/node": "22.2.0",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
+    "@types/three": "^0.170.0",
     "next": "^14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
