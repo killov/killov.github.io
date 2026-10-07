@@ -122,7 +122,7 @@ export const stack: StackCategory[] = [
         id: "infra",
         titleKey: "stack.cat.infra",
         level: "strong",
-        tags: ["Docker", "Terraform", "AWS (S3/SQS/IAM)", "GitHub Actions", "Playwright"],
+        tags: ["Docker", "AWS (S3/SQS/IAM)", "GitHub Actions", "Playwright"],
     },
     {
         id: "db",

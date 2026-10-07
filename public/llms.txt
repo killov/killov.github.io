@@ -33,7 +33,7 @@ PHP 8.4, Nette, Latte, PHPStan, TypeScript, Node.js.
 ## Stack (strong)
 
 React, MobX, Next.js, SCSS/Less, Dart/Flutter, C#/.NET, Java,
-Docker, Terraform, AWS (S3/SQS/IAM), GitHub Actions, Playwright, MySQL,
+Docker, AWS (S3/SQS/IAM), GitHub Actions, Playwright, MySQL,
 PostgreSQL, Redis, ScyllaDB, Prisma, Claude Code, MCP servery, Gemini, WorkMux.
 
 ## Selected projects

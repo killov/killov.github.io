@@ -125,7 +125,7 @@ const jsonLd = {
         "C#", ".NET", "ASP.NET",
         "TypeScript", "JavaScript", "Node.js",
         "React", "MobX", "Next.js", "SCSS",
-        "Docker", "Terraform",
+        "Docker",
         "AWS", "GitHub Actions", "Playwright",
         "MySQL", "PostgreSQL", "Redis", "ScyllaDB", "Prisma",
         "Stripe", "Gemini AI",

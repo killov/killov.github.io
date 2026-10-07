@@ -214,7 +214,7 @@ const MachineReadableProfile: React.FC = () => {
             <p>
                 <strong>Zkušenosti:</strong> programuje od 12 let, nejvíc ho baví realtime webové aplikace, teď se zaměřuje na AI a posouvání jejích limitů. 6+ let v produkci. Backend vývojář ve Worldee.com od 2019.{" "}
                 <strong>Expert:</strong> PHP 8.4, Nette, TypeScript, Node.js.{" "}
-                <strong>Strong:</strong> C#/.NET, React, MobX, Next.js, AWS, Docker, Terraform, MySQL, PostgreSQL, Redis, ScyllaDB.
+                <strong>Strong:</strong> C#/.NET, React, MobX, Next.js, AWS, Docker, MySQL, PostgreSQL, Redis, ScyllaDB.
             </p>
             <p>
                 <strong>Vlastní projekty:</strong> WorkMux (AI orchestrátor pro vývojáře), Ironbean (DI knihovna, 7⭐), OverCup (realtime portál 27 deskovek pro 2 hráče), ArmyGame (online strategická hra).

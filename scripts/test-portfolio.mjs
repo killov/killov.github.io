@@ -57,7 +57,7 @@ await check("desktop: let po zastávkách + obsah + i18n", async () => {
     // Obsah (je v DOM i když panel zrovna není vidět)
     if ((await page.locator("text=/^PHP 8.4$/").count()) < 1) throw new Error("Chybí PHP 8.4 tag ve Stack");
     if ((await page.locator("text=/^Java$/").count()) < 1) throw new Error("Chybí Java tag");
-    for (const gone of ["Kubernetes/EKS", "Helm", "ScyllaDB Driver", "Dapper"]) {
+    for (const gone of ["Kubernetes/EKS", "Helm", "ScyllaDB Driver", "Dapper", "Terraform"]) {
         if ((await page.getByText(gone, {exact: true}).count()) > 0) {
             throw new Error(`${gone} by neměl být přítomen`);
         }

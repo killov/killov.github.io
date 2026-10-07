@@ -924,7 +924,7 @@ function stackInfra(labels: string[]): Showcase {
     group.add(withDelay(ring, 0.5));
     parts.push(ring);
 
-    // Terraform: drátěný "cloud" se sám postaví
+    // AWS: drátěný "cloud" se sám postaví
     const cloud = new THREE.Group();
     cloud.position.set(-6.2, 1, 0);
     [[0, 0, 0, 1.1], [0.9, 0.3, 0, 0.8], [-0.9, 0.2, 0.2, 0.75], [0.2, 0.8, -0.2, 0.7]].forEach(([x, y, z, r]) => {
