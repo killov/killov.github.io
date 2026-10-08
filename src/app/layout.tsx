@@ -101,6 +101,7 @@ const jsonLd = {
     name: "Zdeněk Mazurák",
     givenName: "Zdeněk",
     familyName: "Mazurák",
+    honorificPrefix: "Bc.",
     alternateName: "killov",
     url: SITE_URL,
     image: `${SITE_URL}/bezec.jpg`,
@@ -200,6 +201,8 @@ export default function RootLayout({
                     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
                     rel="stylesheet"
                 />
+                {/* textura Země se stáhne souběžně s JS (three.js ji načítá s crossOrigin=anonymous) */}
+                <link rel="preload" href="/textures/earth-1024.webp" as="image" type="image/webp" crossOrigin="anonymous" fetchPriority="high"/>
                 <link rel="alternate" hrefLang="cs" href={`${SITE_URL}/?lang=cs`}/>
                 <link rel="alternate" hrefLang="en" href={`${SITE_URL}/?lang=en`}/>
                 <link rel="alternate" hrefLang="x-default" href={SITE_URL}/>

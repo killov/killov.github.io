@@ -18,7 +18,7 @@ import {
     projects,
     stack,
 } from "./data/profile";
-import {STATIONS, VH_PER_STATION, holdAtStations, PanelPlacement} from "./scene/stations";
+import {STATIONS, VH_PER_STATION, holdAtStations, readTrack, stationScroll, PanelPlacement} from "./scene/stations";
 import type {CityCommand, FrameState, GameCommand, PanelLayout, Universe} from "./scene/Universe";
 import {placeById, places} from "./data/places";
 import type {GameEvent, GameFocus, GameTarget} from "./scene/solar";
@@ -82,6 +82,13 @@ interface ShowcaseView {
 
 const N3 = [1, 2, 3];
 
+// three.js (velký chunk) se začne stahovat hned při načtení modulu, souběžně s hydratací
+const universeModule = typeof window === "undefined" ? null : import("./scene/Universe");
+
+/** na dotykovém displeji nápověda bez myši a klávesnice (klíč + ".touch") */
+const touchKey = (key: string) =>
+    typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches ? `${key}.touch` : key;
+
 function resolveShowcase(key: ShowcaseKey, t: (k: string) => string): ShowcaseView {
     if (key.kind === "project") {
         const p = projects[key.index];
@@ -108,7 +115,8 @@ function resolveShowcase(key: ShowcaseKey, t: (k: string) => string): ShowcaseVi
         scene, title: t(`sc.${scene}.title`), badge: t("sc.badge.about"), badgeClass: style.kindOss,
         bullets: N3.map((n) => t(`sc.${scene}.b${n}`)), tags: [],
         href: key.id === "repos" ? profile.github : undefined,
-        labels: N3.map((n) => t(`sc.${scene}.l${n}`)),
+        // hvězdná mapa má navíc názvy dalších souhvězdí
+        labels: (key.id === "stars" ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : N3).map((n) => t(`sc.${scene}.l${n}`)),
         image: key.id === "pilot" ? bezec.src : undefined,
     };
 }
@@ -154,7 +162,8 @@ function panelLayout(placement: PanelPlacement, w: number, h: number): PanelLayo
     let cy = H / 2 + 10;
     let yaw = 0;
     if (W <= 800) {
-        cy = H - 84 - Math.min(h, H * 0.6) / 2;
+        // spodek panelu nad ukazatelem letu; h je skutečná výška (CSS ji omezí na viditelnou plochu)
+        cy = H - 84 - Math.min(h, H - 190) / 2;
     } else if (placement === "left") {
         cx = margin(0.05, 40) + w / 2;
         yaw = 0.16;
@@ -391,7 +400,7 @@ const GameHud: React.FC<{refs: GameRefs; command: (c: GameCommand) => void; onEx
             <div className={style.gameTop}>
                 <div className={style.gameTitle}>☄ {t("game.title")}</div>
                 <div className={style.gameHow}>{t("game.howto")}</div>
-                <div className={style.gameHowSub}>{t("game.drag")}</div>
+                <div className={style.gameHowSub}>{t(touchKey("game.drag"))}</div>
             </div>
             <button ref={exitRef} type="button" className={`${style.btnGhost} ${style.gameExit}`} onClick={onExit}>
                 ✕ {t("game.exit")}
@@ -506,7 +515,7 @@ const CityHud: React.FC<{
                         </button>
                     ))}
                 </div>
-                <div className={style.cityHelp}>{loading ? t("city.loading") : driving ? t("city.help") : t("city.orbit")}</div>
+                <div className={style.cityHelp}>{loading ? t("city.loading") : driving ? t(touchKey("city.help")) : t(touchKey("city.orbit"))}</div>
             </div>
 
             <div className={style.citySide}>
@@ -547,6 +556,9 @@ function Experience() {
     const [game, setGame] = useState(false);
     const [toast, setToast] = useState<{id: number; text: string; kind: GameEvent["kind"]} | null>(null);
     const activeRef = useRef(0);
+    /** kolik px textu se do panelu nevejde (dočítá se scrollem stránky) */
+    const readsRef = useRef<number[]>(STATIONS.map(() => 0));
+    const [readExtra, setReadExtra] = useState(0);
     const showcaseRef = useRef<ShowcaseKey | null>(null);
     const gameRef = useRef(false);
     const [city, setCity] = useState<{place: string; driving: boolean; loading: boolean} | null>(null);
@@ -592,7 +604,7 @@ function Experience() {
     /** posun kamery = skutečný scroll; vrací cílový scrollY pro zastávku */
     const scrollForStation = (i: number) => {
         const max = document.documentElement.scrollHeight - window.innerHeight;
-        return (i / LAST) * max;
+        return stationScroll(i, max, readsRef.current);
     };
 
     const goTo = useCallback((i: number) => {
@@ -677,6 +689,20 @@ function Experience() {
     const gameCommand = useCallback((cmd: GameCommand) => universeRef.current?.gameCommand(cmd), []);
 
     const layoutPanels = useCallback(() => {
+        // přesah textu panelů (na desktopu 0 — panel se vejde celý)
+        // (měří se obsah, ne scrollHeight — ten nafukuje animovaná skenovací linka)
+        readsRef.current = panelRefs.current.map((el) => {
+            const frame = el?.querySelector<HTMLElement>(`.${style.frame}`);
+            const content = frame?.querySelector<HTMLElement>(`.${style.panelContent}`);
+            if (!frame || !content) return 0;
+            const px = (v: string) => parseFloat(v) || 0;
+            // + přechod "pokračuje dál" (::after za obsahem, jen na mobilu)
+            const fade = getComputedStyle(frame, "::after");
+            const fadeH = fade.content && fade.content !== "none" ? px(fade.height) + px(fade.marginTop) + px(fade.marginBottom) : 0;
+            const end = content.offsetTop + content.offsetHeight + fadeH + px(getComputedStyle(frame).paddingBottom);
+            return Math.max(0, Math.ceil(end - frame.clientHeight));
+        });
+        setReadExtra(readsRef.current.reduce((a, b) => a + b, 0));
         const universe = universeRef.current;
         if (!universe) return;
         universe.setPanelLayouts(STATIONS.map((s, i) => {
@@ -800,7 +826,14 @@ function Experience() {
 
         const rawProgress = () => {
             const max = document.documentElement.scrollHeight - window.innerHeight;
-            return max > 0 ? (window.scrollY / max) * LAST : 0;
+            if (max <= 0) return 0;
+            const {raw, offsets} = readTrack(window.scrollY, max, readsRef.current);
+            // dlouhý panel: scroll stránky posouvá jeho text
+            panelRefs.current.forEach((el, i) => {
+                const frame = el?.querySelector<HTMLElement>(`.${style.frame}`);
+                if (frame && frame.scrollTop !== offsets[i]) frame.scrollTop = offsets[i];
+            });
+            return raw;
         };
         const onScroll = () => universe?.setTarget(holdAtStations(rawProgress()));
         const onResize = () => {
@@ -845,7 +878,7 @@ function Experience() {
         };
 
         // three.js se načte až na klientu (a odděleně od hlavního bundlu)
-        import("./scene/Universe").then(({Universe: U}) => {
+        (universeModule ?? import("./scene/Universe")).then(({Universe: U}) => {
             if (disposed || !canvasRef.current) return;
             universe = new U(canvasRef.current, {
                 reducedMotion: reduced,
@@ -865,6 +898,9 @@ function Experience() {
             }
         });
 
+        // přesah textu se mění, až se načtou fonty a obrázky
+        document.fonts?.ready.then(() => !disposed && onResize());
+        window.addEventListener("load", onResize);
         window.addEventListener("scroll", onScroll, {passive: true});
         window.addEventListener("resize", onResize);
         window.addEventListener("pointermove", onPointer, {passive: true});
@@ -877,10 +913,16 @@ function Experience() {
             window.clearTimeout(toastTimer.current);
             window.removeEventListener("scroll", onScroll);
             window.removeEventListener("resize", onResize);
+            window.removeEventListener("load", onResize);
             window.removeEventListener("pointermove", onPointer);
             window.removeEventListener("keydown", onKey);
         };
     }, [goTo, onFrame, openProject, closeProject, layoutPanels, enterGame, exitGame, exitPlace]);
+
+    // delší stránka (přesah textu) = jiný přepočet scrollu na kameru
+    useEffect(() => {
+        window.dispatchEvent(new Event("scroll"));
+    }, [readExtra]);
 
     // jiný jazyk = jiné výšky panelů
     useEffect(() => {
@@ -970,7 +1012,7 @@ function Experience() {
                             <span className={style.eyebrowDot} aria-hidden="true"/>
                             {t("hero.availability")}
                         </p>
-                        <h1 className={`${style.heroName} ${style.item}`} style={{"--i": 1} as React.CSSProperties}>Zdeněk Mazurák</h1>
+                        <h1 className={`${style.heroName} ${style.item}`} style={{"--i": 1} as React.CSSProperties}><span className={style.heroDegree}>Bc.</span> Zdeněk Mazurák</h1>
                         <p className={`${style.heroRole} ${style.item}`} style={{"--i": 2} as React.CSSProperties}>{t("hero.role")}</p>
                         <p className={`${style.heroTagline} ${style.item}`} style={{"--i": 3} as React.CSSProperties}>{t("hero.tagline")}</p>
                         <div className={`${style.heroCta} ${style.item}`} style={{"--i": 4} as React.CSSProperties}>
@@ -1228,7 +1270,7 @@ function Experience() {
             <BootSequence/>
 
             {/* tohle se ve skutečnosti scrolluje — výška = délka letu */}
-            <div className={style.spacer} style={{height: `calc(100vh + ${LAST * VH_PER_STATION}vh)`}} aria-hidden="true"/>
+            <div className={style.spacer} style={{height: `calc(100vh + ${LAST * VH_PER_STATION}vh + ${readExtra}px)`}} aria-hidden="true"/>
             <MachineReadableProfile/>
         </div>
     );

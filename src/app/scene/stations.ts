@@ -47,3 +47,37 @@ export function holdAtStations(raw: number): number {
     const t = Math.min(Math.max((f - 0.28) / (0.72 - 0.28), 0), 1);
     return seg + t * t * (3 - 2 * t);
 }
+
+/**
+ * Scroll stránky (px) → surová pozice kamery (0..N-1) a posun obsahu panelů.
+ * U zastávky, jejíž panel se nevejde (reads[i] px navíc), kamera stojí a scroll
+ * místo ní posouvá text panelu — na mobilu tak jde dočíst i bez scrollování
+ * uvnitř 3D panelu (to iOS neumí). Zbytek scrollu se dělí rovnoměrně na přelety.
+ */
+export function readTrack(y: number, max: number, reads: number[]): {raw: number; offsets: number[]} {
+    const n = reads.length - 1;
+    const L = Math.max(max - reads.reduce((s, r) => s + r, 0), 1) / n;
+    const offsets = reads.map(() => 0);
+    let raw = n;
+    let found = false;
+    let start = 0;
+    reads.forEach((read, i) => {
+        offsets[i] = Math.min(Math.max(y - start, 0), read);
+        if (!found && y < start + read) {
+            raw = i;
+            found = true;
+        } else if (!found && i < n && y < start + read + L) {
+            raw = i + (y - start - read) / L;
+            found = true;
+        }
+        start += read + L;
+    });
+    return {raw, offsets};
+}
+
+/** scrollY, kde začíná zastávka i (panel na začátku textu) */
+export function stationScroll(i: number, max: number, reads: number[]): number {
+    const n = reads.length - 1;
+    const L = Math.max(max - reads.reduce((s, r) => s + r, 0), 1) / n;
+    return reads.slice(0, i).reduce((s, r) => s + r + L, 0);
+}

@@ -433,6 +433,9 @@ export class Universe {
 
     // otáčení Země / hologramu tažením
     private drag: {id: number; x: number; y: number; moved: number} | null = null;
+    /** prsty na displeji — dvěma se ve hře a ve městě zoomuje (pinch) */
+    private touches = new Map<number, {x: number; y: number}>();
+    private pinchDist = 0;
     private yaw = 0;
     private pitch = 0;
     private yawVel = 0;
@@ -646,18 +649,42 @@ export class Universe {
     }
 
     private onWheel = (e: WheelEvent) => {
-        if (this.cityState === "in" && this.city) {
-            e.preventDefault();
-            this.city.zoom(e.deltaY);
-            return;
-        }
-        if (!this.game || this.gameTarget === 0) return;
-        e.preventDefault();
-        this.game.zoom(e.deltaY);
+        if (this.zoomBy(e.deltaY)) e.preventDefault();
     };
+
+    /** zoom ve městě nebo ve hře; deltaY jako u kolečka myši */
+    private zoomBy(deltaY: number): boolean {
+        if (this.cityState === "in" && this.city) {
+            this.city.zoom(deltaY);
+            return true;
+        }
+        if (!this.game || this.gameTarget === 0) return false;
+        this.game.zoom(deltaY);
+        return true;
+    }
+
+    private pinchSpan() {
+        const [a, b] = Array.from(this.touches.values());
+        return Math.hypot(a.x - b.x, a.y - b.y);
+    }
+
+    /** druhý prst: místo tažení začne pinch (rozehraný hod se nepustí, jen zruší) */
+    private trackTouch(e: PointerEvent): boolean {
+        if (e.pointerType !== "touch") return false;
+        this.touches.set(e.pointerId, {x: e.clientX, y: e.clientY});
+        if (this.touches.size !== 2 || (this.cityState !== "in" && !(this.game && this.gameTarget > 0))) return false;
+        if (this.drag) {
+            if (this.cityState === "in") this.city?.pointerUp();
+            else this.game?.cancelAim();
+            this.drag = null;
+        }
+        this.pinchDist = this.pinchSpan();
+        return true;
+    }
 
     private onPointerDown = (e: PointerEvent) => {
         if (e.button !== 0) return;
+        if (this.trackTouch(e)) return;
         if (this.cityState !== "off") {
             if (this.city && this.cityState === "in") this.city.pointerDown(e.clientX, e.clientY);
             this.drag = {id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0};
@@ -675,6 +702,16 @@ export class Universe {
     };
 
     private onPointerMove = (e: PointerEvent) => {
+        if (this.touches.has(e.pointerId)) {
+            this.touches.set(e.pointerId, {x: e.clientX, y: e.clientY});
+            if (this.pinchDist > 0 && this.touches.size === 2) {
+                const span = this.pinchSpan();
+                // stejné měřítko jako kolečko: zoom(dy) násobí vzdálenost exp(dy * 0.0012)
+                if (span > 0) this.zoomBy(Math.log(this.pinchDist / span) / 0.0012);
+                this.pinchDist = span;
+                return;
+            }
+        }
         const d = this.drag;
         if (this.cityState !== "off") {
             if (d && d.id === e.pointerId && this.city) this.city.pointerMove(e.clientX, e.clientY);
@@ -713,6 +750,8 @@ export class Universe {
     };
 
     private onPointerUp = (e: PointerEvent) => {
+        this.touches.delete(e.pointerId);
+        if (this.touches.size < 2) this.pinchDist = 0;
         const d = this.drag;
         if (!d || d.id !== e.pointerId) return;
         this.drag = null;
@@ -756,12 +795,26 @@ export class Universe {
         this.earth.add(this.globe);
         scene.add(this.earth);
 
-        new THREE.TextureLoader().load("/textures/earth.png", (tex) => {
+        // nejdřív malá textura (rychle vidět Zemi), ostrá se dotáhne a vymění
+        const loader = new THREE.TextureLoader();
+        let sharp = false;
+        const useMap = (tex: THREE.Texture, full: boolean) => {
+            if (!this.planetMat || (sharp && !full)) {
+                tex.dispose();
+                return;
+            }
             tex.colorSpace = THREE.NoColorSpace;
             tex.wrapS = THREE.RepeatWrapping;
             tex.anisotropy = this.renderer?.capabilities.getMaxAnisotropy() ?? 1;
-            if (this.planetMat) this.planetMat.uniforms.uMap.value = tex;
-        });
+            const old = this.planetMat.uniforms.uMap.value as THREE.Texture | null;
+            this.planetMat.uniforms.uMap.value = tex;
+            old?.dispose();
+            sharp ||= full;
+        };
+        loader.load("/textures/earth-1024.webp", (tex) => {
+            useMap(tex, false);
+            loader.load("/textures/earth.webp", (full) => useMap(full, true));
+        }, undefined, () => loader.load("/textures/earth.webp", (full) => useMap(full, true)));
 
         const markerMat = new THREE.MeshBasicMaterial({
             color: 0x6ef2c0, transparent: true, opacity: 0.95, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false,

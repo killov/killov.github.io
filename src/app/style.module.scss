@@ -346,6 +346,10 @@ $mobile: 800px;
 .stage {
     position: fixed;
     inset: 0;
+    // šířka přesně jako canvas a window.innerWidth (i pod klasickým scrollbarem
+    // na Windows) — střed .camera3d musí sedět s translate(W/2) z Universe,
+    // jinak se rozdíl pár px ve 3D zesílí na stovky px a panel uletí z obrazovky
+    width: 100vw;
     z-index: 5;
     overflow: hidden;
     pointer-events: none;
@@ -398,8 +402,26 @@ $mobile: 800px;
 
     @media (max-width: $mobile) {
         padding: 14px 16px 18px;
+        // svh = výška i s vysunutými lištami prohlížeče (vh je na iOS vyšší než
+        // viditelná plocha); panel se musí vejít mezi navigaci a ukazatel dole
         max-height: 60vh;
-        overflow-y: auto;
+        max-height: min(72svh, calc(100svh - 190px));
+        // text se neposouvá prstem uvnitř panelu (iOS to ve 3D neumí),
+        // ale scrollem stránky — App nastavuje scrollTop (readTrack)
+        overflow-y: hidden;
+
+        // "pokračuje dál": přechod u spodní hrany, dokud se nedočte na konec
+        // (sticky prvek za obsahem — na konci stojí na svém místě a nic nepřekrývá)
+        &::after {
+            content: "";
+            position: sticky;
+            bottom: -18px;
+            display: block;
+            height: 42px;
+            margin: 0 -16px -18px;
+            background: linear-gradient(rgba(3, 10, 24, 0), rgba(3, 10, 24, 0.95));
+            pointer-events: none;
+        }
     }
 }
 
@@ -548,6 +570,14 @@ $mobile: 800px;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 0 24px rgba(56, 214, 255, 0.25));
+}
+
+.heroDegree {
+    font-size: 0.42em;
+    font-weight: 600;
+    letter-spacing: 0;
+    vertical-align: 0.95em;
+    margin-right: 0.1em;
 }
 
 .heroRole {
@@ -720,17 +750,11 @@ $mobile: 800px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    // na mobilu pod sebe — vodorovné posouvání uvnitř 3D panelu iOS neumí;
+    // dlouhý panel se pak dočte scrollem stránky (readTrack)
     @media (max-width: $mobile) {
-        display: flex;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
+        grid-template-columns: minmax(0, 1fr);
         gap: 10px;
-        padding-bottom: 6px;
-
-        > * {
-            flex: 0 0 78%;
-            scroll-snap-align: start;
-        }
     }
 }
 
@@ -1930,4 +1954,128 @@ $mobile: 800px;
 
 .timelineRow.open3d {
     padding-right: 44px;
+}
+
+// === telefon na šířku: málo výšky — panely se musí vejít, HUD na jeden řádek ===
+@media (max-height: 500px) and (orientation: landscape) {
+    .hud {
+        top: 8px;
+        left: 14px;
+        right: 14px;
+        flex-wrap: nowrap;
+        gap: 12px;
+
+        > nav {
+            order: 0;
+            width: auto;
+            flex: 1;
+            min-width: 0;
+        }
+    }
+
+    .navList {
+        overflow-x: auto;
+        scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; }
+    }
+
+    .status,
+    .telemetry,
+    .hint,
+    .dialNext {
+        display: none;
+    }
+
+    .panel {
+        width: min(58vw, 560px) !important;
+    }
+
+    .frame {
+        zoom: 0.82;
+        padding: 12px 18px 14px;
+        // výška po odečtení horní lišty; zoom zmenšuje i max-height, proto dělení
+        max-height: calc((100vh - 104px) / 0.82);
+        max-height: calc((100svh - 104px) / 0.82);
+        overflow-y: hidden;
+    }
+
+    // hra: titulek, skóre a ovládání času co nejníž a nejtenčí
+    .gameTop {
+        top: 46px;
+        width: min(520px, 60vw);
+    }
+
+    .gameTitle {
+        font-size: 1rem;
+    }
+
+    .gameHow {
+        display: none;
+    }
+
+    .gameScore,
+    .gameExit {
+        top: 54px;
+        bottom: auto;
+    }
+
+    .gameScore {
+        left: 14px;
+    }
+
+    .gameExit {
+        right: 14px;
+    }
+
+    .gameSide {
+        top: 50%;
+        bottom: auto;
+        right: 14px;
+        transform: translateY(-40%);
+    }
+
+    .gameTime {
+        bottom: 8px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px 12px;
+        padding: 6px 10px;
+        width: min(760px, calc(100vw - 24px));
+    }
+
+    .gameHour {
+        width: auto;
+        flex: 1 1 200px;
+    }
+
+    .gameToast {
+        top: 38%;
+        font-size: 1rem;
+        white-space: normal;
+        width: auto;
+        max-width: 60vw;
+    }
+
+    // město: karta vlevo nahoře menší, šipky auta úplně dole
+    .cityCard {
+        top: 48px;
+        left: 14px;
+        zoom: 0.8;
+        max-width: 50vw;
+    }
+
+    .citySide {
+        top: 48px;
+        bottom: auto;
+        right: 14px;
+    }
+
+    .citySpeed {
+        bottom: 10px;
+    }
+
+    .cityPad {
+        bottom: 10px;
+    }
 }

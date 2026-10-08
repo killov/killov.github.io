@@ -3,7 +3,8 @@ import * as THREE from "three";
 /**
  * Herní režim "vesmír": Slunce, planety a Měsíc na skutečných (kruhových)
  * drahách podle data, ovládání času a minihra — Zemi jde jako prakem chytit,
- * natáhnout a hodit; gravitace Slunce ji stáhne a při zásahu se rozpadne.
+ * natáhnout a hodit; přitahuje ji Slunce i planety (Venuše, Jupiter, …) a při
+ * zásahu se rozpadne. Měsíc bez Země letí dál sám — většinou ho spolkne Slunce.
  * Odpalování raket z Olomouce na Měsíc.
  *
  * Vzdálenosti jsou stlačené (jinak by planety nebyly vidět), polohy a čas
@@ -28,7 +29,7 @@ export type GameTarget = "sun" | "moon" | "mercury" | "venus" | "mars" | "jupite
 
 export interface GameEvent {
     id: number;
-    kind: "hit" | "crash" | "lost" | "rocket" | "throw";
+    kind: "hit" | "crash" | "lost" | "rocket" | "throw" | "moonSun" | "moonCrash";
     target?: GameTarget;
 }
 
@@ -51,14 +52,21 @@ interface PlanetDef {
     color: number;
     color2: number;
     bands: number;
+    gm: number; // gravitační parametr (oproti Slunci hodně přehnaný, ať je vliv vidět)
 }
 
+/** gravitace Země a Měsíce — Země drží Měsíc, Měsíc trochu tahá letící Zemi */
+const GM_EARTH = 4.2e4;
+const GM_MOON = 2.5e3;
+/** změkčení, ať průlet těsně kolem planety nevystřelí rychlost do nekonečna */
+const SOFTEN = 36;
+
 const PLANETS: PlanetDef[] = [
-    {id: "mercury", a: 0.387, L0: 252.25, rate: 4.09233, radius: 3.2, color: 0x9c8f86, color2: 0x5d5550, bands: 0},
-    {id: "venus", a: 0.723, L0: 181.98, rate: 1.60213, radius: 7.4, color: 0xe8c98a, color2: 0xb98c4c, bands: 6},
-    {id: "mars", a: 1.524, L0: 355.43, rate: 0.52403, radius: 5.2, color: 0xd2643a, color2: 0x7a3420, bands: 0},
-    {id: "jupiter", a: 5.203, L0: 34.35, rate: 0.08309, radius: 22, color: 0xe2c49c, color2: 0x9a6a46, bands: 22},
-    {id: "saturn", a: 9.537, L0: 50.08, rate: 0.03346, radius: 18, color: 0xe9d7a6, color2: 0xa98d5c, bands: 16},
+    {id: "mercury", a: 0.387, L0: 252.25, rate: 4.09233, radius: 3.2, color: 0x9c8f86, color2: 0x5d5550, bands: 0, gm: 1.4e4},
+    {id: "venus", a: 0.723, L0: 181.98, rate: 1.60213, radius: 7.4, color: 0xe8c98a, color2: 0xb98c4c, bands: 6, gm: 5.5e4},
+    {id: "mars", a: 1.524, L0: 355.43, rate: 0.52403, radius: 5.2, color: 0xd2643a, color2: 0x7a3420, bands: 0, gm: 2.2e4},
+    {id: "jupiter", a: 5.203, L0: 34.35, rate: 0.08309, radius: 22, color: 0xe2c49c, color2: 0x9a6a46, bands: 22, gm: 3.2e5},
+    {id: "saturn", a: 9.537, L0: 50.08, rate: 0.03346, radius: 18, color: 0xe9d7a6, color2: 0xa98d5c, bands: 16, gm: 1.6e5},
 ];
 
 /** stlačení vzdáleností: vnitřní planety skoro reálně, vnější blíž */
@@ -269,6 +277,9 @@ export class SpaceGame {
     private stateTime = 0;
     private returnFrom = new THREE.Vector3();
     private eventId = 0;
+    private eventAge = 0;
+    /** hláška o Měsíci počká, až dozní ta o Zemi */
+    private pendingEvent: {kind: GameEvent["kind"]; target?: GameTarget} | null = null;
     private shake = 0;
 
     private camYaw = 0;
@@ -287,6 +298,13 @@ export class SpaceGame {
     private moon: THREE.Mesh;
     private moonMat: THREE.ShaderMaterial;
     private moonPos = new THREE.Vector3();
+    /** bound = obíhá Zemi podle kalendáře; free = Země odletěla a Měsíc letí sám; gone = shořel/zmizel; return = vrací se na dráhu */
+    private moonState: "bound" | "free" | "gone" | "return" = "bound";
+    private moonVel = new THREE.Vector3();
+    private moonTime = 0;
+    private moonFrom = new THREE.Vector3();
+    private moonFromGone = false;
+    private acc = new THREE.Vector3();
     private moonLabel: THREE.Sprite;
     private earthLabel: THREE.Sprite;
     private flags = new THREE.Group();
@@ -430,6 +448,10 @@ export class SpaceGame {
         this.earthVisible = true;
         this.earthScale = 1;
         this.focus = "earth";
+        this.moonState = "bound";
+        this.pendingEvent = null;
+        this.moon.visible = true;
+        this.moon.scale.setScalar(1);
         // kamera za Zemí, Slunce v pozadí kousek vedle
         const away = this.tmp.copy(this.earthPos).sub(this.sunPos).normalize();
         this.camYaw = Math.atan2(away.x, away.z) + 0.38;
@@ -518,13 +540,23 @@ export class SpaceGame {
         this.stateTime = 0;
         this.throws++;
         this.trailPts = [];
+        this.releaseMoon();
         this.emit("throw");
         this.aimLine.visible = false;
         this.preview.visible = false;
     }
 
+    /** zrušení tažení bez hodu (např. druhý prst = pinch zoom) */
+    cancelAim() {
+        this.orbitDrag = null;
+        if (this.state !== "aim") return;
+        this.state = "orbit";
+        this.aimLine.visible = false;
+        this.preview.visible = false;
+    }
+
     launchRocket() {
-        if (this.state !== "orbit" || this.rockets.filter((r) => !r.done).length >= 4) return;
+        if (this.state !== "orbit" || this.moonState !== "bound" || this.rockets.filter((r) => !r.done).length >= 4) return;
         const group = new THREE.Group();
         const body = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.32, 1.6, 12), new THREE.MeshBasicMaterial({color: 0xe8f4ff}));
         const nose = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.7, 12), new THREE.MeshBasicMaterial({color: 0xff5c7a}));
@@ -558,8 +590,15 @@ export class SpaceGame {
     update(dt: number, mix: number) {
         this.simTime += this.speed * dt * 1000;
         this.stateTime += dt;
+        this.eventAge += dt;
+        if (this.pendingEvent && this.eventAge > 2.6) {
+            this.emit(this.pendingEvent.kind, this.pendingEvent.target);
+            this.pendingEvent = null;
+        }
         this.layout(dt);
+        this.integrate(dt);
         this.updateEarth(dt);
+        this.updateMoon(dt);
         this.updateRockets(dt);
         this.updateCamera(dt);
         this.earthLabel.position.copy(this.earthPos).add(this.tmp.set(0, R * 1.25, 0));
@@ -586,12 +625,118 @@ export class SpaceGame {
         }
         this.orbitLines.forEach((l) => l.position.copy(this.sunPos));
         helio(100.46 + 0.9856 * d, AU, this.anchor).add(this.sunPos);
-        // Měsíc obíhá kotvu Země (ne letící Zemi)
-        const moonL = 218.316 + 13.176396 * d;
-        helio(moonL, MOON_DIST, this.moonPos).add(this.state === "orbit" || this.state === "aim" ? this.earthPos : this.anchor);
-        this.moon.position.copy(this.moonPos);
+        // Měsíc obíhá Zemi, dokud ji má u sebe; jinak letí sám (integrate)
+        const moonL = this.moonL();
+        if (this.moonState === "bound") helio(moonL, MOON_DIST, this.moonPos).add(this.earthPos);
         // Měsíc ukazuje k Zemi pořád stejnou stranu
-        this.moon.rotation.y = moonL * DEG + Math.PI;
+        if (this.moonState !== "free") this.moon.rotation.y = moonL * DEG + Math.PI;
+    }
+
+    private moonL() {
+        return 218.316 + 13.176396 * days(this.simTime);
+    }
+
+    /** gravitační zrychlení v bodě p: Slunce, planety a podle potřeby Měsíc / Země */
+    private accel(p: THREE.Vector3, out: THREE.Vector3, moon: boolean, earth: boolean): THREE.Vector3 {
+        out.set(0, 0, 0);
+        const pullTo = (src: THREE.Vector3, gm: number, soft: number) => {
+            const d = this.tmp2.copy(src).sub(p);
+            const r2 = d.lengthSq() + soft;
+            out.addScaledVector(d, gm / (r2 * Math.sqrt(r2)));
+        };
+        pullTo(this.sunPos, GM, 0);
+        for (const pl of this.planets) pullTo(pl.pos, pl.def.gm, SOFTEN);
+        if (moon) pullTo(this.moonPos, GM_MOON, SOFTEN);
+        if (earth) pullTo(this.earthPos, GM_EARTH, SOFTEN);
+        return out;
+    }
+
+    /** fyzika v reálném čase: letící Země a Měsíc, který přišel o Zemi, se navzájem přitahují */
+    private integrate(dt: number) {
+        const earthFlies = this.state === "fly";
+        const moonFree = this.moonState === "free";
+        if (!earthFlies && !moonFree) return;
+        const steps = 8;
+        const h = dt / steps;
+        for (let i = 0; i < steps; i++) {
+            const earthNow = this.state === "fly";
+            if (earthNow) {
+                this.earthVel.add(this.accel(this.earthPos, this.acc, this.moonState === "free", false).multiplyScalar(h));
+                this.earthPos.addScaledVector(this.earthVel, h);
+                this.checkCollisions();
+            }
+            if (this.moonState === "free") {
+                this.moonVel.add(this.accel(this.moonPos, this.acc, false, earthNow).multiplyScalar(h));
+                this.moonPos.addScaledVector(this.moonVel, h);
+                this.checkMoonCollisions();
+            }
+        }
+    }
+
+    /** Země odletěla: Měsíc si ponechá oběžnou rychlost a dál ho tahá jen gravitace */
+    private releaseMoon() {
+        if (this.moonState !== "bound") return;
+        const L = this.moonL() * DEG;
+        this.moonState = "free";
+        this.moonTime = 0;
+        this.moonVel.set(-Math.sin(L), 0, -Math.cos(L)).multiplyScalar(Math.sqrt(GM_EARTH / MOON_DIST));
+    }
+
+    private checkMoonCollisions() {
+        const p = this.moonPos;
+        if (p.distanceTo(this.sunPos) < SUN_R + MOON_R) {
+            this.sunHeat = Math.max(this.sunHeat, 0.6);
+            this.moonGone("moonSun", "sun");
+            return;
+        }
+        for (const pl of this.planets) {
+            if (p.distanceTo(pl.pos) < pl.def.radius + MOON_R) {
+                this.moonGone("moonCrash", pl.def.id);
+                return;
+            }
+        }
+        if (p.distanceTo(this.sunPos) > AU * 9) this.moonGone();
+    }
+
+    private moonGone(kind?: GameEvent["kind"], target?: GameTarget) {
+        this.moonState = "gone";
+        this.moon.visible = false;
+        if (!kind) return;
+        if (this.event && this.eventAge < 2.6 && this.event.kind !== "throw") this.pendingEvent = {kind, target};
+        else this.emit(kind, target);
+    }
+
+    /** Země je zpátky na dráze → Měsíc se k ní vrátí */
+    private recallMoon() {
+        if (this.moonState === "bound" || this.moonState === "return") return;
+        this.moonFromGone = this.moonState === "gone";
+        this.moonFrom.copy(this.moonPos);
+        this.moonState = "return";
+        this.moonTime = 0;
+    }
+
+    private updateMoon(dt: number) {
+        this.moonTime += dt;
+        if (this.moonState === "free") {
+            // volný Měsíc se pomalu kutálí
+            this.moon.rotation.y += dt * 0.6;
+            if (this.moonTime > 30) this.moonGone();
+        } else if (this.moonState === "return") {
+            const k = easeInOut(Math.min(this.moonTime / 1.6, 1));
+            const goal = helio(this.moonL(), MOON_DIST, this.tmp).add(this.earthPos);
+            if (this.moonFromGone) {
+                this.moonPos.copy(goal);
+                this.moon.scale.setScalar(Math.max(k, 0.001));
+            } else {
+                this.moonPos.lerpVectors(this.moonFrom, goal, k);
+            }
+            this.moon.visible = true;
+            if (k >= 1) {
+                this.moonState = "bound";
+                this.moon.scale.setScalar(1);
+            }
+        }
+        this.moon.position.copy(this.moonPos);
     }
 
     private updateEarth(dt: number) {
@@ -616,15 +761,7 @@ export class SpaceGame {
                 break;
             }
             case "fly": {
-                const steps = 6;
-                const h = dt / steps;
-                for (let i = 0; i < steps && this.state === "fly"; i++) {
-                    const toSun = this.tmp.copy(this.sunPos).sub(this.earthPos);
-                    const r = toSun.length();
-                    this.earthVel.addScaledVector(toSun, (GM / (r * r * r)) * h);
-                    this.earthPos.addScaledVector(this.earthVel, h);
-                    this.checkCollisions();
-                }
+                // pohyb spočítal integrate()
                 this.spin += this.spinRate * dt;
                 this.trailPts.push(this.earthPos.clone());
                 if (this.trailPts.length > 160) this.trailPts.shift();
@@ -671,6 +808,7 @@ export class SpaceGame {
                     this.earthVisible = true;
                     this.earthScale = 0.2;
                     this.state = "orbit";
+                    this.recallMoon();
                     this.stateTime = 0;
                     this.trail.visible = false;
                 }
@@ -682,6 +820,7 @@ export class SpaceGame {
                 this.spin += this.spinRate * dt * (1 - k);
                 if (k >= 1) {
                     this.state = "orbit";
+                    this.recallMoon();
                     this.trail.visible = false;
                 }
                 break;
@@ -719,7 +858,7 @@ export class SpaceGame {
                 return;
             }
         }
-        if (p.distanceTo(this.moonPos) < MOON_R + R * 0.8) this.shatter("crash", "moon");
+        if (this.moon.visible && p.distanceTo(this.moonPos) < MOON_R + R * 0.8) this.shatter("crash", "moon");
     }
 
     private shatter(kind: GameEvent["kind"], target: GameTarget) {
@@ -750,9 +889,10 @@ export class SpaceGame {
 
     private emit(kind: GameEvent["kind"], target?: GameTarget) {
         this.event = {id: ++this.eventId, kind, target};
+        this.eventAge = 0;
     }
 
-    /** předpověď letu (jen gravitace Slunce), 6 s dopředu */
+    /** předpověď letu (Slunce + planety v jejich současné poloze), 6 s dopředu */
     private updatePreview() {
         const vis = this.pull.length() > 3;
         this.preview.visible = vis;
@@ -763,10 +903,8 @@ export class SpaceGame {
         const h = 1 / 40;
         let n = 0;
         for (let i = 0; i < 240 && n < 120; i++) {
-            const toSun = this.tmp.copy(this.sunPos).sub(p);
-            const r = toSun.length();
-            if (r < SUN_R) break;
-            vel.addScaledVector(toSun, (GM / (r * r * r)) * h);
+            if (p.distanceTo(this.sunPos) < SUN_R || this.planets.some((pl) => p.distanceTo(pl.pos) < pl.def.radius)) break;
+            vel.addScaledVector(this.accel(p, this.acc, false, false), h);
             p.addScaledVector(vel, h);
             if (i % 2 === 0) attr.setXYZ(n++, p.x, p.y, p.z);
         }

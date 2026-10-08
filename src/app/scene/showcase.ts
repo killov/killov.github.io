@@ -1266,59 +1266,272 @@ function aboutCommits(labels: string[]): Showcase {
     };
 }
 
-// --- O mně: hvězdy — 7 hvězd Ironbeanu = Velký vůz ---
-function starShape(r: number): THREE.ShapeGeometry {
+// --- O mně: hvězdy — 7 hvězd Ironbeanu = Velký vůz na 3D hvězdném glóbu ---
+function starShape(r: number): THREE.Shape {
     const shape = new THREE.Shape();
     for (let i = 0; i < 10; i++) {
         const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
-        const rr = i % 2 ? r * 0.42 : r;
+        const rr = i % 2 ? r * 0.45 : r;
         if (i === 0) shape.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
         else shape.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
     }
     shape.closePath();
-    return new THREE.ShapeGeometry(shape);
+    return shape;
+}
+
+/** plastická pěticípá hvězda (vytažená, se zkosením), střed v počátku */
+function starGeometry(r: number): THREE.BufferGeometry {
+    const depth = r * 0.22;
+    const geo = new THREE.ExtrudeGeometry(starShape(r), {depth, bevelEnabled: true, bevelThickness: r * 0.18, bevelSize: r * 0.12, bevelSegments: 2});
+    geo.translate(0, 0, -depth / 2);
+    geo.computeVertexNormals();
+    return geo;
+}
+
+/** kov se "světlem" z kamery — showcase scéna žádná světla nemá */
+function starMaterial(color: number): THREE.ShaderMaterial {
+    return new THREE.ShaderMaterial({
+        uniforms: {uColor: {value: new THREE.Color(color)}},
+        vertexShader: /* glsl */ `
+            varying vec3 vN;
+            varying vec3 vV;
+            void main() {
+                vec4 mv = modelViewMatrix * vec4(position, 1.0);
+                vN = normalize(normalMatrix * normal);
+                vV = normalize(-mv.xyz);
+                gl_Position = projectionMatrix * mv;
+            }
+        `,
+        fragmentShader: /* glsl */ `
+            uniform vec3 uColor;
+            varying vec3 vN;
+            varying vec3 vV;
+            void main() {
+                vec3 n = normalize(vN);
+                vec3 l = normalize(vec3(0.45, 0.7, 0.55));
+                float diff = max(dot(n, l), 0.0);
+                float spec = pow(max(dot(reflect(-l, n), vV), 0.0), 24.0);
+                float rim = pow(1.0 - max(dot(n, vV), 0.0), 2.5);
+                vec3 col = uColor * (0.28 + 0.85 * diff) + vec3(1.0, 0.97, 0.88) * spec * 0.9 + uColor * rim * 0.6;
+                gl_FragColor = vec4(col, 1.0);
+            }
+        `,
+    });
+}
+
+function glowSprite(color: string, size: number): THREE.Sprite {
+    const c = document.createElement("canvas");
+    c.width = c.height = 64;
+    const ctx = c.getContext("2d")!;
+    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, color);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 64, 64);
+    const tex = new THREE.CanvasTexture(c);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({map: tex, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false}));
+    s.scale.setScalar(size);
+    return s;
+}
+
+interface Constellation {
+    label: number; // index do labels
+    color: number;
+    size: number;
+    // [rektascenze v h, deklinace v °, magnituda]
+    stars: Array<[number, number, number]>;
+    lines: Array<[number, number]>;
+}
+
+const CONSTELLATIONS: Constellation[] = [
+    {
+        // Alkaid, Mizar, Alioth, Megrez, Phecda, Merak, Dubhe
+        label: 2, color: 0xffd76e, size: 0.27,
+        stars: [[13.792, 49.31, 1.86], [13.399, 54.93, 2.23], [12.9, 55.96, 1.77], [12.257, 57.03, 3.31], [11.897, 53.69, 2.44], [11.031, 56.38, 2.37], [11.062, 61.75, 1.79]],
+        lines: [[0, 1], [1, 2], [2, 3], [3, 6], [6, 5], [5, 4], [4, 3]],
+    },
+    {
+        // Polárka, Yildun, ε, ζ, η, Pherkad, Kochab
+        label: 3, color: 0xcfe4ff, size: 0.2,
+        stars: [[2.53, 89.26, 1.98], [17.537, 86.59, 4.35], [16.766, 82.04, 4.21], [15.734, 77.79, 4.29], [16.292, 75.76, 4.95], [15.345, 71.83, 3.0], [14.845, 74.16, 2.08]],
+        lines: [[0, 1], [1, 2], [2, 3], [3, 6], [6, 5], [5, 4], [4, 3]],
+    },
+    {
+        // Caph, Schedar, γ, Ruchbah, Segin
+        label: 5, color: 0xcfe4ff, size: 0.2,
+        stars: [[0.153, 59.15, 2.27], [0.675, 56.54, 2.24], [0.945, 60.72, 2.15], [1.43, 60.24, 2.66], [1.907, 63.67, 3.35]],
+        lines: [[0, 1], [1, 2], [2, 3], [3, 4]],
+    },
+    {
+        // Regulus, η, Algieba, Adhafera, Rasalas, ε, Zosma, Chertan, Denebola
+        label: 6, color: 0xcfe4ff, size: 0.2,
+        stars: [[10.14, 11.97, 1.35], [10.122, 16.76, 3.48], [10.333, 19.84, 2.08], [10.278, 23.42, 3.43], [9.879, 26.01, 3.88], [9.764, 23.77, 2.98], [11.235, 20.52, 2.56], [11.237, 15.43, 3.33], [11.818, 14.57, 2.14]],
+        lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [2, 6], [6, 8], [8, 7], [7, 0], [6, 7]],
+    },
+    {
+        // Betelgeuze, Bellatrix, Meissa, Alnitak, Alnilam, Mintaka, Saiph, Rigel
+        label: 7, color: 0xcfe4ff, size: 0.2,
+        stars: [[5.919, 7.41, 0.5], [5.419, 6.35, 1.64], [5.585, 9.93, 3.39], [5.679, -1.94, 1.77], [5.604, -1.2, 1.69], [5.533, -0.3, 2.23], [5.796, -9.67, 2.09], [5.242, -8.2, 0.13]],
+        lines: [[0, 2], [2, 1], [0, 3], [1, 5], [3, 4], [4, 5], [3, 6], [5, 7]],
+    },
+    {
+        // Deneb, Sadr, Gienah, δ, Albireo
+        label: 8, color: 0xcfe4ff, size: 0.2,
+        stars: [[20.69, 45.28, 1.25], [20.37, 40.26, 2.23], [20.77, 33.97, 2.48], [19.75, 45.13, 2.87], [19.512, 27.96, 3.05]],
+        lines: [[0, 1], [1, 4], [3, 1], [1, 2]],
+    },
+];
+
+const SKY_R = 6;
+
+/** směr na obloze; zrcadleně, aby souhvězdí zvenku glóbu vypadala jako ze Země */
+function skyDir(raH: number, dec: number): THREE.Vector3 {
+    const a = (raH / 24) * Math.PI * 2;
+    const d = THREE.MathUtils.degToRad(dec);
+    return new THREE.Vector3(Math.cos(d) * Math.cos(a), -Math.cos(d) * Math.sin(a), Math.sin(d));
 }
 
 function aboutStars(labels: string[]): Showcase {
     const group = new THREE.Group();
     const parts: THREE.Object3D[] = [];
-    // Alkaid, Mizar, Alioth, Megrez, Phecda, Merak, Dubhe
-    const pos = [v(-6, 2.2, 0.4), v(-3.9, 2.8, -0.2), v(-1.9, 2.4, 0.3), v(0.1, 1.6, 0), v(0.6, -0.9, 0.5), v(3.6, -1.4, -0.3), v(4.1, 1.5, 0.2)];
-    const stars = pos.map((p, i) => {
-        const g = new THREE.Group();
-        g.position.copy(p);
-        g.add(new THREE.Mesh(starShape(0.55), new THREE.MeshBasicMaterial({color: 0xffd76e, transparent: true, opacity: 0.95, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false})));
-        g.add(new THREE.Mesh(new THREE.SphereGeometry(0.75, 16, 12), additive(0xffd76e, 0.12)));
-        group.add(withDelay(g, 0.2 + i * 0.25));
-        parts.push(g);
-        return g;
+    // natočení oblohy: Velký vůz čelem ke kameře (ta je kousek nad), severní pól nahoru
+    const sky = new THREE.Group();
+    sky.position.y = 0.8;
+    const front = CONSTELLATIONS[0].stars.reduce((s, [ra, dec]) => s.add(skyDir(ra, dec)), new THREE.Vector3()).normalize();
+    const pole = v(0, 0, 1);
+    const upSky = pole.clone().addScaledVector(front, -front.dot(pole)).normalize();
+    const skyBasis = new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(upSky, front), upSky, front);
+    const toCam = v(0, Math.sin(0.3), Math.cos(0.3));
+    const upCam = v(0, 1, 0).addScaledVector(toCam, -toCam.y).normalize();
+    const camBasis = new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(upCam, toCam), upCam, toCam);
+    // pivot startuje natočený o 0.6 rad → protočit zpátky
+    const viewBasis = new THREE.Matrix4().makeRotationY(-0.6).multiply(camBasis);
+    sky.quaternion.setFromRotationMatrix(viewBasis.multiply(skyBasis.transpose()));
+    group.add(sky);
+    // na výšku (mobil) je nad popisem málo místa — menší glóbus, ať nezajede pod navigaci
+    if (window.innerWidth / window.innerHeight < 0.9) {
+        group.scale.setScalar(0.74);
+        group.position.y = -1;
+    }
+
+    // glóbus: tmavé jádro (tlumí hvězdy na odvrácené straně) + síť rovnoběžek a poledníků
+    const core = new THREE.Mesh(new THREE.SphereGeometry(SKY_R * 0.985, 48, 32), new THREE.MeshBasicMaterial({color: 0x020a18, transparent: true, opacity: 0.6}));
+    sky.add(withDelay(core, 0));
+    parts.push(core);
+    const gridPts: THREE.Vector3[] = [];
+    for (let dec = -60; dec <= 60; dec += 30) {
+        for (let i = 0; i < 96; i++) gridPts.push(skyDir((i / 96) * 24, dec).multiplyScalar(SKY_R), skyDir(((i + 1) / 96) * 24, dec).multiplyScalar(SKY_R));
+    }
+    for (let ra = 0; ra < 24; ra += 2) {
+        for (let dec = -90; dec < 90; dec += 5) gridPts.push(skyDir(ra, dec).multiplyScalar(SKY_R), skyDir(ra, dec + 5).multiplyScalar(SKY_R));
+    }
+    const grid = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(gridPts), lineMat(BLUE, 0.16));
+    sky.add(withDelay(grid, 0.05));
+    parts.push(grid);
+    const axis = line([v(0, 0, -SKY_R * 1.25), v(0, 0, SKY_R * 1.25)], MINT, 0.35);
+    sky.add(withDelay(axis, 0.1));
+    parts.push(axis);
+    // slabé hvězdy pozadí
+    const rnd = seeded(7);
+    const dust = new Float32Array(700 * 3);
+    for (let i = 0; i < 700; i++) {
+        const u = rnd() * 2 - 1;
+        const th = rnd() * Math.PI * 2;
+        const s = Math.sqrt(1 - u * u);
+        dust.set([s * Math.cos(th) * SKY_R, s * Math.sin(th) * SKY_R, u * SKY_R], i * 3);
+    }
+    const dustGeo = new THREE.BufferGeometry();
+    dustGeo.setAttribute("position", new THREE.BufferAttribute(dust, 3));
+    const dustPts = new THREE.Points(dustGeo, new THREE.PointsMaterial({color: 0xbfe6ff, size: 0.05, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false}));
+    sky.add(withDelay(dustPts, 0.15));
+    parts.push(dustPts);
+
+    const spinners: Array<{m: THREE.Mesh; phase: number}> = [];
+    const seq: Array<{l: THREE.Line; at: number}> = [];
+    const tags: THREE.Sprite[] = [];
+    CONSTELLATIONS.forEach((c, ci) => {
+        const main = ci === 0;
+        const start = main ? 0.2 : 2.1 + ci * 0.35;
+        const pos = c.stars.map(([ra, dec]) => skyDir(ra, dec).multiplyScalar(SKY_R * 1.02));
+        const mat = starMaterial(ci === 1 ? MINT : c.color);
+        c.stars.forEach(([, , mag], i) => {
+            const polaris = ci === 1 && i === 0;
+            const r = c.size * THREE.MathUtils.clamp(1.25 - mag * 0.15, 0.55, 1.3) * (polaris ? 1.5 : 1);
+            const g = new THREE.Group();
+            g.position.copy(pos[i]);
+            g.lookAt(pos[i].clone().multiplyScalar(2)); // +Z ven z glóbu
+            const m = new THREE.Mesh(starGeometry(r), polaris ? starMaterial(MINT) : mat);
+            g.add(m, glowSprite(main ? "rgba(255,215,110,1)" : "rgba(190,225,255,1)", r * 4.5));
+            sky.add(withDelay(g, start + i * (main ? 0.25 : 0.06)));
+            parts.push(g);
+            spinners.push({m, phase: ci * 1.7 + i * 0.9});
+        });
+        c.lines.forEach(([a, b], i) => {
+            // spojnice po povrchu glóbu (oblouk), ne skrz
+            const arc = Array.from({length: 9}, (_, k) => pos[a].clone().lerp(pos[b], k / 8).setLength(SKY_R * 1.02));
+            const l = line(arc, main ? CYAN : BLUE, main ? 0.7 : 0.45);
+            l.visible = false;
+            sky.add(l);
+            seq.push({l, at: (main ? 2 : start + 0.5) + i * (main ? 0.25 : 0.08)});
+        });
+        const center = pos.reduce((s, p) => s.add(p), new THREE.Vector3()).normalize();
+        const tag = withDelay(label(labels[c.label] ?? "", main ? "#6ef2c0" : "#9fd0ff", main ? 0.75 : 0.55), (main ? 1.8 : start + 0.4));
+        // štítek kousek "na jih" od souhvězdí, ať nepřekrývá hvězdy
+        const south = center.clone().multiplyScalar(center.z).sub(pole).normalize();
+        tag.position.copy(center).addScaledVector(south, main ? 0.17 : 0.16).setLength(SKY_R * 1.1);
+        if (ci === 1) tag.position.copy(skyDir(15.6, 78)).multiplyScalar(SKY_R * 1.2);
+        sky.add(tag);
+        parts.push(tag);
+        tags.push(tag);
+        if (main) {
+            // "7 hvězd" u Dubhe
+            const seven = withDelay(label(labels[1] ?? "", "#58a6ff", 0.6), 2.2);
+            seven.position.copy(pos[6]).multiplyScalar(1.14);
+            sky.add(seven);
+            parts.push(seven);
+            tags.push(seven);
+        }
+        if (ci === 1) {
+            const pol = withDelay(label(labels[4] ?? "", "#6ef2c0", 0.55), start + 0.3);
+            pol.position.copy(pos[0]).multiplyScalar(1.12);
+            sky.add(pol);
+            parts.push(pol);
+            tags.push(pol);
+        }
     });
-    const order = [0, 1, 2, 3, 6, 5, 4, 3];
-    const seq = order.slice(1).map((b, i) => {
-        const l = line([pos[order[i]], pos[b]], CYAN, 0.6);
-        group.add(l);
-        return {l, at: 2 + i * 0.25};
-    });
-    // Ironbean "fazole" uprostřed
+
+    // Ironbean "fazole" pod glóbem
     const bean = new THREE.Mesh(new THREE.CapsuleGeometry(0.45, 0.6, 6, 12), additive(MINT, 0.5));
-    bean.position.set(-1.2, -2.6, 0);
+    bean.position.set(SKY_R + 0.8, -2.6, 0);
     bean.rotation.z = 0.9;
     group.add(withDelay(bean, 1.6));
     parts.push(bean);
-    const beanEdge = edges(new THREE.CapsuleGeometry(0.5, 0.6, 4, 8), MINT, 0.8);
-    bean.add(beanEdge);
+    bean.add(edges(new THREE.CapsuleGeometry(0.5, 0.6, 4, 8), MINT, 0.8));
+    const beanTag = withDelay(label(labels[0] ?? "", "#38d6ff", 0.7), 1.8);
+    beanTag.position.set(SKY_R + 0.8, -1.4, 0);
+    group.add(beanTag);
+    parts.push(beanTag);
 
-    placeLabels(group, parts, labels, [v(-1.2, -3.9, 0), v(4.1, 2.9, 0), v(-6, 3.6, 0)], 1.8);
-
+    const wp = new THREE.Vector3();
+    const center = new THREE.Vector3();
     return {
         group,
         update(t) {
             assemble(parts, t);
-            stars.forEach((s, i) => {
-                s.rotation.z = t * 0.6 + i;
-            });
+            // hvězdy se pomalu točí a kolébají — je vidět, že mají objem
+            for (const s of spinners) {
+                s.m.rotation.z = t * 0.4 + s.phase;
+                s.m.rotation.y = Math.sin(t * 1.1 + s.phase) * 0.7;
+            }
             for (const s of seq) s.l.visible = t > s.at;
             bean.rotation.y = t;
+            // štítky na odvrácené straně glóbu zeslábnou (kamera se dívá zhruba po -z)
+            group.updateWorldMatrix(true, true);
+            group.getWorldPosition(center);
+            for (const tag of tags) {
+                const facing = tag.getWorldPosition(wp).sub(center).normalize().z;
+                (tag.material as THREE.SpriteMaterial).opacity = THREE.MathUtils.clamp(0.25 + facing * 1.5, 0.08, 1);
+            }
         },
         dispose: () => disposeGroup(group),
     };

@@ -1,4 +1,5 @@
-// Vygeneruje texturu Země pro holografickou planetu (public/textures/earth.png).
+// Vygeneruje texturu Země pro holografickou planetu (public/textures/earth.webp
+// + menší earth-1024.webp, která se načte jako první — rychlý start na mobilu).
 //
 //   node scripts/build-earth-texture.mjs <adresář s Natural Earth GeoJSON>
 //
@@ -130,5 +131,8 @@ for (let i = 0; i < W * H; i++) {
 }
 
 mkdirSync("public/textures", {recursive: true});
-await sharp(rgb, {raw: {width: W, height: H, channels: 3}}).png({compressionLevel: 9}).toFile("public/textures/earth.png");
-console.log("public/textures/earth.png hotovo");
+// bezeztrátově: kanály jsou data (vzdálenostní pole), ztrátová komprese by je rozbila
+const img = sharp(rgb, {raw: {width: W, height: H, channels: 3}});
+await img.clone().webp({lossless: true, effort: 6}).toFile("public/textures/earth.webp");
+await img.clone().resize(W / 2, H / 2, {kernel: "lanczos3"}).webp({lossless: true, effort: 6}).toFile("public/textures/earth-1024.webp");
+console.log("public/textures/earth.webp + earth-1024.webp hotovo");
