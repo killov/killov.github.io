@@ -9,6 +9,12 @@
 
 export type Lang = "cs" | "en";
 
+/** každý jazyk má vlastní staticky vyrenderovanou URL (kvůli SEO a hreflang) */
+export const LANG_PATH: Record<Lang, string> = {
+    cs: "/",
+    en: "/en/",
+};
+
 export type Dict = Record<string, string>;
 
 export const messages: Record<Lang, Dict> = {
@@ -24,10 +30,10 @@ export const messages: Record<Lang, Dict> = {
         "nav.contact": "Kontakt",
 
         // hero
-        "hero.availability": "Open novým příležitostem",
+        "hero.availability": "Senior backend ve Worldee · buduju WorkMux",
         "hero.role": "Senior full-stack · Backend · AI nástroje pro vývojáře",
         "hero.tagline":
-            "Stavím production-grade systémy (PHP/Nette, C#/.NET, React/MobX) a vlastní AI nástroje pro vývojáře. 6+ let na backendu ve Worldee.",
+            "Přes 6 let držím backend travel platformy Worldee (PHP/Nette, C#/.NET, React/MobX). Vedle toho stavím WorkMux — cloudový AI orchestrátor pro vývojáře — a 3D multiplayer hru Drive.",
         "hero.cta.contact": "Napiš mi",
         "hero.cta.github": "GitHub",
 
@@ -58,22 +64,22 @@ export const messages: Record<Lang, Dict> = {
         // projects
         "projects.title": "Co stavím",
         "projects.subtitle":
-            "WorkMux, open-source, online hry (OverCup, ArmyGame) a produkční systémy, na kterých dělám. Nejvíc mi sedí, když věc jede v produkci a ostatní na ní staví.",
+            "WorkMux, Drive, Worldee, open-source a online hry. Kde to jde, odkaz vede rovnou na běžící produkci.",
         "projects.kind.work": "Práce",
         "projects.kind.oss": "Open-source",
         "projects.kind.ai": "Vlastní AI nástroj",
         "projects.kind.game": "Online hra",
         "projects.visit": "Otevřít",
         "projects.workmux.desc":
-            "AI orchestrátor pro vývojáře — izolované Docker session, web terminály, Claude Code, Go agent přes mTLS, Electron. Můj hlavní letošní projekt.",
+            "AI orchestrátor pro vývojáře — izolované Docker session, web terminály, Claude Code, Go agent přes mTLS, Electron. Můj hlavní projekt — cloudový produkt, víc na www.workmux.com.",
         "projects.armygame.desc":
-            "Moje online strategická hra v prohlížeči — PHP backend s WebSocket serverem a herním daemonem, mapa ve WebGL, MySQL. Na online hrách dál stavím.",
+            "Moje online strategická hra v prohlížeči — PHP backend s WebSocket serverem a herním daemonem, mapa ve WebGL, MySQL. Zatím není venku.",
         "projects.ironbean.desc":
             "Vlastní DI knihovna pro TS/JS (core/react/react-router/jasmine). 7⭐, 455 commitů za 6 let, port i do Dartu.",
         "projects.worldee.desc":
             "Hlavní vývojář produkčního travel monolitu (8 381 commitů od 2020). PHP/Nette backend, React/MobX admin, C#/.NET FlightService + CarRentalService na ScyllaDB, async translate workflow nad Gemini a Stripe platby.",
-        "projects.quadient.desc":
-            "Enterprise software development v C#/.NET.",
+        "projects.drive.desc":
+            "Multiplayer 3D jízda v prohlížeči po skutečném Česku — Praha, Brno, Ostrava i celý Olomoucký kraj z OpenStreetMap a reálného terénu. Živé město s MHD podle jízdních řádů, bez instalace.",
 
         // experience
         "experience.title": "Zkušenosti",
@@ -88,12 +94,12 @@ export const messages: Record<Lang, Dict> = {
         // contact
         "contact.title": "Kontakt",
         "contact.subtitle":
-            "Open novým příležitostem — remote, případně hybrid z Olomouce. Cílová sazba od 7 000 Kč / MD.",
+            "Ozvi se — rád proberu WorkMux, AI nástroje pro vývojáře nebo cokoliv z backendu.",
         "contact.email.label": "E-mail",
         "contact.github.label": "GitHub",
         "contact.linkedin.label": "LinkedIn",
         "contact.location.label": "Lokalita",
-        "contact.location.value": "Olomouc, Česko · remote / hybrid",
+        "contact.location.value": "Olomouc, Česko",
 
         // common
         "common.from": "od",
@@ -147,12 +153,12 @@ export const messages: Record<Lang, Dict> = {
         "projects.worldee.b1": "Travel platforma: plánování cest, deník a mapy",
         "projects.worldee.b2": "Lety a auta přes C#/.NET mikroservices nad ScyllaDB",
         "projects.worldee.b3": "PHP/Nette backend, React frontend, platby přes Stripe",
-        "projects.quadient.l1": "Šablona",
-        "projects.quadient.l2": "Data",
-        "projects.quadient.l3": "Výstup",
-        "projects.quadient.b1": "Enterprise software pro komunikaci se zákazníky",
-        "projects.quadient.b2": "Dokumenty se skládají ze šablon a dat ve velkém",
-        "projects.quadient.b3": "Vývoj v C#/.NET",
+        "projects.drive.l1": "OpenStreetMap",
+        "projects.drive.l2": "Multiplayer",
+        "projects.drive.l3": "Živé město",
+        "projects.drive.b1": "Celé Česko ze skutečné mapy ulic a reálného terénu",
+        "projects.drive.b2": "Jezdíš s kamarády v jednom světě — provoz, MHD, chodci",
+        "projects.drive.b3": "Svět se streamuje po dlaždicích, běží v prohlížeči i na mobilu",
         // OverCup
         "projects.overcup.desc":
             "Realtime herní portál pro dva hráče — 27 deskovek od šachů a Go po Uno a poker. Next.js 15, socket.io, stav partií v Redisu, MySQL a Elo žebříček.",
@@ -248,6 +254,25 @@ export const messages: Record<Lang, Dict> = {
 
         // vesmírná hra
         "hud.game": "Hra",
+        // FSD — autopilot průvodce webem
+        "fsd.title": "FSD · Autopilot",
+        "fsd.hint": "FSD — autopilot tě proveze webem (F)",
+        "fsd.stop": "Převzít řízení",
+        "fsd.voice": "Hlas",
+        "fsd.takeover": "Řízení převzato — FSD vypnuto",
+        "fsd.off": "FSD vypnuto",
+        "fsd.arrived": "Cíl dosažen 🏁",
+        "fsd.say.hero": "FSD aktivní. Ahoj, jsem autopilot a provezu tě webem Zdeňka Mazuráka — senior backend vývojáře z Olomouce. Ruce můžeš pustit z volantu.",
+        "fsd.say.about": "Zdeněk programuje od dvanácti let. Přes šest let drží backend travel platformy Worldee a poslední dobou se naplno věnuje AI.",
+        "fsd.say.stack": "Tohle je jeho stack. Expert na PHP a Nette, silný v C#, TypeScriptu a Reactu — a s AI agenty pracuje denně.",
+        "fsd.say.projects": "Teď to nejzajímavější — projekty. Každý si můžeš otevřít jako 3D hologram. Dva ti ukážu.",
+        "fsd.say.workmux": "WorkMux je jeho hlavní projekt: cloudový orchestrátor, který pouští víc AI agentů naráz, každého ve vlastním kontejneru.",
+        "fsd.say.drive": "Drive je multiplayer jízda po skutečném Česku přímo v prohlížeči. Tam už ale řídíš ty, ne já.",
+        "fsd.say.experience": "Kariéra: od roku 2019 Worldee, předtím Quadient a enterprise vývoj v C# a .NET.",
+        "fsd.say.education": "Vystudoval informatiku na Univerzitě Palackého v Olomouci, předtím elektrotechniku na SPŠE.",
+        "fsd.say.game": "A ještě jedna věc — na webu je schovaná hra. Sluneční soustava s planetami na skutečných pozicích. Nejdřív pošlu raketu na Měsíc.",
+        "fsd.say.throw": "A teď pointa hry: chytíš Zemi, natáhneš ji jako prak a hodíš ji do Slunce. Takhle.",
+        "fsd.say.contact": "A jsme v cíli. Jestli chceš probrat WorkMux, AI nebo backend, napiš mu. Autopilot se loučí.",
         "place.up": "Přírodovědecká fakulta UP · Katedra informatiky",
         "place.spse": "VOŠ a SPŠE Olomouc",
         "place.quadient": "Quadient · BEA centrum",
@@ -315,10 +340,10 @@ export const messages: Record<Lang, Dict> = {
         "nav.education": "Education",
         "nav.contact": "Contact",
 
-        "hero.availability": "Open to opportunities",
+        "hero.availability": "Senior backend at Worldee · building WorkMux",
         "hero.role": "Senior full-stack · Backend · AI tools for developers",
         "hero.tagline":
-            "I build production-grade systems (PHP/Nette, C#/.NET, React/MobX) and my own AI dev tools. 6+ years on the backend at Worldee.",
+            "For 6+ years I've owned the backend of the Worldee travel platform (PHP/Nette, C#/.NET, React/MobX). On the side I'm building WorkMux — a cloud AI orchestrator for developers — and Drive, a 3D multiplayer driving game.",
         "hero.cta.contact": "Get in touch",
         "hero.cta.github": "GitHub",
 
@@ -346,22 +371,22 @@ export const messages: Record<Lang, Dict> = {
 
         "projects.title": "What I'm building",
         "projects.subtitle":
-            "WorkMux, open-source, online games (OverCup, ArmyGame) and the production systems I work on. I'm at my best when something is running in production and others build on top of it.",
+            "WorkMux, Drive, Worldee, open-source and online games. Where possible, the link goes straight to the live product.",
         "projects.kind.work": "Work",
         "projects.kind.oss": "Open-source",
         "projects.kind.ai": "Own AI tool",
         "projects.kind.game": "Online game",
         "projects.visit": "Open",
         "projects.workmux.desc":
-            "AI orchestrator for developers — isolated Docker sessions, web terminals, Claude Code, Go agent over mTLS, Electron. My main project this year.",
+            "AI orchestrator for developers — isolated Docker sessions, web terminals, Claude Code, Go agent over mTLS, Electron. My main project — a cloud product, more at www.workmux.com.",
         "projects.armygame.desc":
-            "My own browser-based online strategy game — PHP backend with a WebSocket server and game daemon, WebGL map, MySQL. I keep building online games.",
+            "My own browser-based online strategy game — PHP backend with a WebSocket server and game daemon, WebGL map, MySQL. Not released yet.",
         "projects.ironbean.desc":
             "My own DI library for TS/JS (core/react/react-router/jasmine). 7⭐, 455 commits over 6 years, ported to Dart.",
         "projects.worldee.desc":
             "Main developer of the production travel monolith (8,381 commits since 2020). PHP/Nette backend, React/MobX admin, C#/.NET FlightService + CarRentalService on ScyllaDB, async translate workflow on Gemini and Stripe payments.",
-        "projects.quadient.desc":
-            "Enterprise software development in C#/.NET.",
+        "projects.drive.desc":
+            "Multiplayer 3D driving in the browser across the real Czech Republic — Prague, Brno, Ostrava and the whole Olomouc region, built from OpenStreetMap and real terrain. A living city with public transport on real timetables, no install.",
 
         "experience.title": "Experience",
         "experience.worldee.desc":
@@ -373,12 +398,12 @@ export const messages: Record<Lang, Dict> = {
 
         "contact.title": "Contact",
         "contact.subtitle":
-            "Open to new opportunities — remote, or hybrid from Olomouc. Day rate from 7,000 CZK.",
+            "Get in touch — happy to talk about WorkMux, AI dev tools or anything backend.",
         "contact.email.label": "Email",
         "contact.github.label": "GitHub",
         "contact.linkedin.label": "LinkedIn",
         "contact.location.label": "Location",
-        "contact.location.value": "Olomouc, Czechia · remote / hybrid",
+        "contact.location.value": "Olomouc, Czechia",
 
         "common.from": "from",
         "common.to": "to",
@@ -428,12 +453,12 @@ export const messages: Record<Lang, Dict> = {
         "projects.worldee.b1": "Travel platform: trip planning, journal and maps",
         "projects.worldee.b2": "Flights and cars via C#/.NET microservices on ScyllaDB",
         "projects.worldee.b3": "PHP/Nette backend, React frontend, Stripe payments",
-        "projects.quadient.l1": "Template",
-        "projects.quadient.l2": "Data",
-        "projects.quadient.l3": "Output",
-        "projects.quadient.b1": "Enterprise customer communications software",
-        "projects.quadient.b2": "Documents assembled from templates and data at scale",
-        "projects.quadient.b3": "Built in C#/.NET",
+        "projects.drive.l1": "OpenStreetMap",
+        "projects.drive.l2": "Multiplayer",
+        "projects.drive.l3": "Living city",
+        "projects.drive.b1": "The whole Czech Republic from real street maps and terrain",
+        "projects.drive.b2": "Drive with friends in one shared world — traffic, transit, pedestrians",
+        "projects.drive.b3": "The world streams in tiles; runs in the browser and on mobile",
         // OverCup
         "projects.overcup.desc":
             "Realtime two-player game portal — 27 board games from chess and Go to Uno and poker. Next.js 15, socket.io, game state in Redis, MySQL and an Elo ladder.",
@@ -526,6 +551,25 @@ export const messages: Record<Lang, Dict> = {
         "sc.about-stars.b3": "Open-source DI library for TypeScript",
 
         "hud.game": "Play",
+        // FSD — autopilot tour of the site
+        "fsd.title": "FSD · Autopilot",
+        "fsd.hint": "FSD — the autopilot drives you through the site (F)",
+        "fsd.stop": "Take over",
+        "fsd.voice": "Voice",
+        "fsd.takeover": "You took over — FSD disengaged",
+        "fsd.off": "FSD disengaged",
+        "fsd.arrived": "Destination reached 🏁",
+        "fsd.say.hero": "FSD engaged. Hi, I'm the autopilot and I'll drive you through the site of Zdeněk Mazurák — a senior backend engineer from Olomouc. Hands off the wheel.",
+        "fsd.say.about": "Zdeněk has been programming since he was twelve. For over six years he's owned the backend of the Worldee travel platform, and lately he's all in on AI.",
+        "fsd.say.stack": "This is his stack. Expert in PHP and Nette, strong in C#, TypeScript and React — and he works with AI agents every day.",
+        "fsd.say.projects": "Now the best part — projects. Each one opens as a 3D hologram. Let me show you two.",
+        "fsd.say.workmux": "WorkMux is his main project: a cloud orchestrator that runs many AI agents at once, each in its own container.",
+        "fsd.say.drive": "Drive is multiplayer driving across the real Czech Republic, right in the browser. There, you drive — not me.",
+        "fsd.say.experience": "Career: Worldee since 2019, before that Quadient and enterprise development in C# and .NET.",
+        "fsd.say.education": "He studied computer science at Palacký University Olomouc, and electrical engineering before that.",
+        "fsd.say.game": "One more thing — there's a hidden game on this site. The solar system with planets at their real positions. First, a rocket to the Moon.",
+        "fsd.say.throw": "And now the point of the game: grab the Earth, pull it back like a slingshot and fling it into the Sun. Like this.",
+        "fsd.say.contact": "And we've arrived. If you want to talk WorkMux, AI or backend, drop him a line. Autopilot signing off.",
         "place.up": "Faculty of Science, Palacký University · Dept. of Computer Science",
         "place.spse": "VOŠ a SPŠE Olomouc (technical college)",
         "place.quadient": "Quadient · BEA centrum",

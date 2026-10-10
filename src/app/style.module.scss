@@ -326,6 +326,7 @@ $mobile: 800px;
     padding: 3px 6px;
     cursor: pointer;
     font: inherit;
+    text-decoration: none;
     transition: color 0.2s ease, background 0.2s ease;
 
     &:hover {
@@ -2078,4 +2079,212 @@ $mobile: 800px;
     .cityPad {
         bottom: 10px;
     }
+}
+
+// --- FSD: autopilot průvodce webem (jako v Tesle) ---
+
+$fsd: #3e6ae1;
+$fsd-light: #8fb0ff;
+
+.fsdBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid rgba(62, 106, 225, 0.8);
+    background: rgba(62, 106, 225, 0.14);
+    color: $fsd-light;
+    font-family: $mono;
+    font-size: 0.68rem;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+        background: rgba(62, 106, 225, 0.3);
+        outline: none;
+    }
+}
+
+.fsdBtnOn {
+    background: $fsd;
+    color: #fff;
+    box-shadow: 0 0 18px rgba(62, 106, 225, 0.7);
+
+    &:hover,
+    &:focus-visible {
+        background: #5580f0;
+    }
+}
+
+// modrá záře po okrajích obrazovky, když řídí autopilot
+.fsdGlow {
+    position: fixed;
+    inset: 0;
+    z-index: 19;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 2px rgba(62, 106, 225, 0.55), inset 0 0 90px rgba(62, 106, 225, 0.35);
+    animation: fsdGlow 2.8s ease-in-out infinite;
+}
+
+@keyframes fsdGlow {
+    0%, 100% { opacity: 0.65; }
+    50% { opacity: 1; }
+}
+
+.layout[data-fsd="true"] .hint {
+    opacity: 0 !important;
+}
+
+.fsdBar {
+    position: fixed;
+    left: 50%;
+    bottom: 26px;
+    z-index: 30;
+    width: min(640px, calc(100vw - 24px));
+    transform: translateX(-50%);
+    padding: 12px 16px 12px;
+    background: rgba(4, 10, 24, 0.86);
+    border: 1px solid rgba(62, 106, 225, 0.7);
+    box-shadow: 0 0 30px rgba(62, 106, 225, 0.3);
+    backdrop-filter: blur(8px);
+    animation: fsdIn 0.5s $ease-out both;
+
+    @media (max-width: $mobile) {
+        bottom: 10px;
+        padding: 10px 12px;
+    }
+}
+
+.fsdHead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: $mono;
+    font-size: 0.66rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.fsdBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: $fsd-light;
+
+    svg {
+        animation: fsdWheel 2.8s ease-in-out infinite;
+    }
+}
+
+@keyframes fsdWheel {
+    0%, 100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+}
+
+.fsdStep {
+    color: $text-muted;
+}
+
+.fsdActions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fsdIconBtn,
+.fsdStop {
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+    border: 1px solid $line;
+    background: transparent;
+    color: $text-dim;
+    padding: 3px 8px;
+
+    &:hover,
+    &:focus-visible {
+        color: $text;
+        border-color: $line-strong;
+        outline: none;
+    }
+}
+
+.fsdStop {
+    border-color: rgba(62, 106, 225, 0.8);
+    color: $fsd-light;
+}
+
+.fsdText {
+    margin: 10px 0 10px;
+    font-family: $sans;
+    font-size: clamp(0.92rem, 1.6vw, 1.05rem);
+    line-height: 1.5;
+    color: $text;
+    min-height: 3em;
+    animation: itemIn 0.5s $ease-out both;
+}
+
+.fsdRoute {
+    display: flex;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+        flex: 1;
+        height: 3px;
+        background: rgba(143, 176, 255, 0.18);
+        transition: background 0.4s ease;
+    }
+
+    .fsdDone {
+        background: rgba(62, 106, 225, 0.7);
+    }
+
+    .fsdNow {
+        background: $fsd-light;
+        box-shadow: 0 0 8px rgba(143, 176, 255, 0.8);
+    }
+}
+
+.fsdToast {
+    position: fixed;
+    left: 50%;
+    bottom: 34px;
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    transform: translateX(-50%);
+    font-family: $mono;
+    font-size: 0.74rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #fff;
+    background: rgba(62, 106, 225, 0.9);
+    box-shadow: 0 0 24px rgba(62, 106, 225, 0.5);
+    white-space: nowrap;
+    animation: fsdIn 0.4s $ease-out both;
+
+    @media (max-width: $mobile) {
+        bottom: 16px;
+    }
+}
+
+// na mobilu je karta hologramu dole — během FSD ji zvedni nad lištu
+@media (max-width: $mobile) {
+    .layout[data-fsd="true"] .showcase {
+        padding-bottom: 180px;
+    }
+}
+
+@keyframes fsdIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+    to { opacity: 1; transform: translateX(-50%); }
 }

@@ -42,6 +42,7 @@ export interface Project {
     /** klíč do i18n — krátký popis (1–2 věty) */
     descKey: string;
     tags: string[];
+    /** odkaz na běžící produkci (ne na repo — ta jsou většinou soukromá) */
     href?: string;
 }
 
@@ -138,41 +139,42 @@ export const projects: Project[] = [
         kind: "ai",
         descKey: "projects.workmux.desc",
         tags: ["TypeScript", "Go", "Docker", "Electron"],
-        href: "https://github.com/workmuxtool/workmux",
+        href: "https://www.workmux.com",
     },
     {
-        title: "Ironbean",
-        kind: "oss",
-        descKey: "projects.ironbean.desc",
-        tags: ["TypeScript", "DI", "OSS"],
-        href: "https://github.com/ironbean/ironbean",
-    },
-    {
-        // soukromé repo killov/onlinegames — bez odkazu
-        title: "OverCup",
+        title: "Drive",
         kind: "game",
-        descKey: "projects.overcup.desc",
-        tags: ["Next.js 15", "React 19", "socket.io", "Redis", "MySQL"],
-    },
-    {
-        title: "ArmyGame",
-        kind: "game",
-        descKey: "projects.armygame.desc",
-        tags: ["PHP", "JavaScript", "WebSocket", "WebGL", "MySQL"],
-        href: "https://github.com/killov/armygame",
+        descKey: "projects.drive.desc",
+        tags: ["Three.js", "WebGL", "OpenStreetMap", "Multiplayer"],
+        href: "https://drive.in.workmux.com/",
     },
     {
         title: "Worldee",
         kind: "work",
         descKey: "projects.worldee.desc",
         tags: ["PHP/Nette", "React", "C#/.NET", "Stripe", "ScyllaDB"],
-        href: "https://github.com/Worldee-com/web_react-php",
+        href: "https://www.worldee.com",
     },
     {
-        title: "Quadient",
-        kind: "work",
-        descKey: "projects.quadient.desc",
-        tags: ["C#/.NET", "Enterprise"],
+        title: "Ironbean",
+        kind: "oss",
+        descKey: "projects.ironbean.desc",
+        tags: ["TypeScript", "DI", "OSS"],
+        href: "https://www.npmjs.com/package/ironbean",
+    },
+    {
+        // zatím není venku — bez odkazu
+        title: "OverCup",
+        kind: "game",
+        descKey: "projects.overcup.desc",
+        tags: ["Next.js 15", "React 19", "socket.io", "Redis", "MySQL"],
+    },
+    {
+        // zatím není venku — bez odkazu
+        title: "ArmyGame",
+        kind: "game",
+        descKey: "projects.armygame.desc",
+        tags: ["PHP", "JavaScript", "WebSocket", "WebGL", "MySQL"],
     },
 ];
 

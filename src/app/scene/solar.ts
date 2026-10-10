@@ -289,6 +289,9 @@ export class SpaceGame {
     private camTarget = new THREE.Vector3();
     private camPos = new THREE.Vector3();
     private orbitDrag: {x: number; y: number} | null = null;
+    /** ukázkový hod (autopilot): čas od začátku míření, null = nehraje se */
+    private demoAim: number | null = null;
+    private demoDir = new THREE.Vector3();
 
     private sun = new THREE.Group();
     private sunMat = sunMaterial();
@@ -555,6 +558,78 @@ export class SpaceGame {
         this.preview.visible = false;
     }
 
+    /** ukázkový hod pro autopilota — natáhne prak směrem ke Slunci a pustí */
+    demoThrow() {
+        if (this.state !== "orbit") return;
+        this.state = "aim";
+        this.stateTime = 0;
+        this.pull.set(0, 0, 0);
+        this.focus = "earth";
+        this.demoAim = 0;
+        this.demoDir.copy(this.pickDemoDir());
+    }
+
+    /**
+     * směr hodu, který trefí Slunce a mine Měsíc i planety — zkusí pár úhlů kolem
+     * přímého směru a každý nasimuluje stejně jako integrate() (Země + uvolněný Měsíc)
+     */
+    private pickDemoDir(): THREE.Vector3 {
+        const up = new THREE.Vector3(0, 1, 0);
+        const toSun = new THREE.Vector3().copy(this.sunPos).sub(this.anchor).setY(0).normalize();
+        const L = this.moonL() * DEG;
+        const moonVel0 = new THREE.Vector3(-Math.sin(L), 0, -Math.cos(L)).multiplyScalar(Math.sqrt(GM_EARTH / MOON_DIST));
+        const ae = new THREE.Vector3();
+        const am = new THREE.Vector3();
+        const d = new THREE.Vector3();
+        for (const deg of [0, 6, -6, 9, -9, 12, -12, 15, -15]) {
+            const dir = toSun.clone().applyAxisAngle(up, deg * DEG);
+            const pull = dir.clone().multiplyScalar(MAX_PULL * 0.8);
+            // při puštění je Země (i Měsíc kolem ní) odtažená o 0.18 × pull
+            const e = this.anchor.clone().addScaledVector(pull, -0.18);
+            const m = this.moonPos.clone().sub(this.earthPos).add(e);
+            const ev = pull.clone().multiplyScalar(LAUNCH_K);
+            const mv = moonVel0.clone();
+            const h = 1 / 120;
+            let ok = false;
+            for (let i = 0; i < 120 * 5; i++) {
+                this.accel(e, ae, false, false);
+                this.accel(m, am, false, false);
+                d.copy(m).sub(e);
+                const r2 = d.lengthSq() + SOFTEN;
+                const inv = 1 / (r2 * Math.sqrt(r2));
+                ae.addScaledVector(d, GM_MOON * inv);
+                am.addScaledVector(d, -GM_EARTH * inv);
+                ev.addScaledVector(ae, h);
+                mv.addScaledVector(am, h);
+                e.addScaledVector(ev, h);
+                m.addScaledVector(mv, h);
+                if (e.distanceTo(m) < MOON_R + R * 0.8 + 2) break;
+                if (this.planets.some((pl) => e.distanceTo(pl.pos) < pl.def.radius + R * 0.8 + 2)) break;
+                if (e.distanceTo(this.sunPos) < SUN_R + R * 0.7) {
+                    ok = true;
+                    break;
+                }
+            }
+            if (ok) return dir;
+        }
+        return toSun;
+    }
+
+    private updateDemoAim(dt: number) {
+        if (this.demoAim === null) return;
+        if (this.state !== "aim") {
+            this.demoAim = null;
+            return;
+        }
+        this.demoAim += dt;
+        const k = Math.min(this.demoAim / 1.4, 1);
+        this.pull.copy(this.demoDir).multiplyScalar(MAX_PULL * 0.8 * (1 - Math.pow(1 - k, 3)));
+        if (this.demoAim > 2) {
+            this.demoAim = null;
+            this.pointerUp();
+        }
+    }
+
     launchRocket() {
         if (this.state !== "orbit" || this.moonState !== "bound" || this.rockets.filter((r) => !r.done).length >= 4) return;
         const group = new THREE.Group();
@@ -596,6 +671,7 @@ export class SpaceGame {
             this.pendingEvent = null;
         }
         this.layout(dt);
+        this.updateDemoAim(dt);
         this.integrate(dt);
         this.updateEarth(dt);
         this.updateMoon(dt);

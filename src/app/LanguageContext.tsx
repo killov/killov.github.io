@@ -1,7 +1,5 @@
-import React, {createContext, useCallback, useContext, useEffect, useState} from "react";
-import {Lang, t as translate} from "./i18n";
-
-const STORAGE_KEY = "zdenek.lang";
+import React, {createContext, useCallback, useContext, useState} from "react";
+import {LANG_PATH, Lang, t as translate} from "./i18n";
 
 interface LanguageContextValue {
     lang: Lang;
@@ -17,28 +15,17 @@ const LanguageContext = createContext<LanguageContextValue>({
     t: (key) => translate("cs", key),
 });
 
-export const LanguageProvider: React.FC<{children: React.ReactNode}> = ({children}) => {
-    // Výchozí cs, aby se render shodoval se SSR (žádný hydration mismatch).
-    const [lang, setLangState] = useState<Lang>("cs");
-
-    useEffect(() => {
-        try {
-            const stored = window.localStorage.getItem(STORAGE_KEY);
-            if (stored === "cs" || stored === "en") {
-                setLangState(stored);
-            }
-        } catch {
-            // localStorage může být nedostupný (privátní režim, SSR-only) — ignoruj.
-        }
-    }, []);
+/**
+ * Jazyk určuje URL (/ = cs, /en/ = en), obě verze jsou předrenderované.
+ * Přepnutí jen vymění texty a URL bez reloadu, ať se nerestartuje 3D scéna.
+ */
+export const LanguageProvider: React.FC<{initialLang: Lang; children: React.ReactNode}> = ({initialLang, children}) => {
+    const [lang, setLangState] = useState<Lang>(initialLang);
 
     const setLang = useCallback((next: Lang) => {
         setLangState(next);
-        try {
-            window.localStorage.setItem(STORAGE_KEY, next);
-        } catch {
-            // viz výše
-        }
+        document.documentElement.lang = next;
+        window.history.replaceState(window.history.state, "", LANG_PATH[next] + window.location.hash);
     }, []);
 
     const t = useCallback(

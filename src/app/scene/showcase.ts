@@ -415,63 +415,83 @@ function worldee(labels: string[]): Showcase {
     };
 }
 
-// --- Quadient: dokumenty projíždí pipeline šablona → data → výstup ---
-function quadient(labels: string[]): Showcase {
+// --- Drive: skutečné město z mapy, auta jezdí po ulicích ---
+function drive(labels: string[]): Showcase {
     const group = new THREE.Group();
     const parts: THREE.Object3D[] = [];
-    const gates = [-4, 0, 4].map((x, i) => {
-        const g = new THREE.Group();
-        g.position.x = x;
-        g.add(edges(new THREE.BoxGeometry(0.3, 3, 3), i === 2 ? MINT : CYAN, 0.9));
-        g.add(new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), additive(i === 2 ? MINT : CYAN, 0.06)));
-        g.children[1].rotation.y = Math.PI / 2;
-        group.add(withDelay(g, i * 0.25));
-        parts.push(g);
-        const l = withDelay(label(labels[i] ?? `#${i}`, i === 2 ? "#6ef2c0" : "#38d6ff", 0.85), 0.5 + i * 0.25);
-        l.position.set(x, 2.3, 0);
-        group.add(l);
-        parts.push(l);
-        return x;
-    });
-    const rail = withDelay(line([new THREE.Vector3(-8, -1.6, 0), new THREE.Vector3(8, -1.6, 0)], BLUE, 0.35), 0.2);
-    group.add(rail);
-    parts.push(rail);
+    const N = 4;
+    const block = 1.5;
+    const street = 0.5;
+    const pitch = block + street;
+    const half = (N * pitch - street) / 2;
+    const base = -1.2;
 
-    const docs = Array.from({length: 9}, (_, i) => {
-        const doc = new THREE.Group();
-        const sheet = edges(new THREE.BoxGeometry(0.05, 1.5, 1.1), CYAN, 0.9);
-        const fill = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.45, 1.05), additive(CYAN, 0.12));
-        doc.add(sheet, fill);
-        // "řádky textu" na dokumentu
-        for (let r = 0; r < 4; r++) {
-            const ln = line([new THREE.Vector3(0.04, 0.45 - r * 0.25, -0.4), new THREE.Vector3(0.04, 0.45 - r * 0.25, 0.4 - (r % 2) * 0.25)], BLUE, 0.7);
-            doc.add(ln);
+    // ulice — mřížka čar mezi bloky
+    for (let i = 0; i <= N; i++) {
+        const c = -half - street / 2 + i * pitch;
+        const road = new THREE.Group();
+        road.add(line([new THREE.Vector3(c, base, -half - 0.6), new THREE.Vector3(c, base, half + 0.6)], BLUE, 0.5));
+        road.add(line([new THREE.Vector3(-half - 0.6, base, c), new THREE.Vector3(half + 0.6, base, c)], BLUE, 0.5));
+        group.add(withDelay(road, i * 0.06));
+        parts.push(road);
+    }
+
+    // domy — v každém bloku pár budov různé výšky
+    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+    for (let bx = 0; bx < N; bx++) {
+        for (let bz = 0; bz < N; bz++) {
+            const x0 = -half + bx * pitch;
+            const z0 = -half + bz * pitch;
+            for (let k = 0; k < 2; k++) {
+                const h = 0.3 + (Math.sin(bx * 2.1 + bz * 1.7 + k * 3.3) * 0.5 + 0.5) * (bx === 1 && bz === 2 ? 2.6 : 1.2);
+                const house = edges(boxGeo, (bx + bz + k) % 3 === 0 ? CYAN : DEEP, 0.7);
+                house.scale.set(block * 0.42, h, block * 0.9);
+                house.position.set(x0 + block * (0.25 + k * 0.5), base + h / 2, z0 + block / 2);
+                group.add(withDelay(house, 0.3 + Math.hypot(x0, z0) * 0.07));
+                parts.push(house);
+            }
         }
-        group.add(doc);
-        return {doc, fill, phase: i / 9};
+    }
+
+    // auta — každé objíždí jednu ulici tam a zpět
+    const carGeo = new THREE.BoxGeometry(0.34, 0.16, 0.18);
+    const cars = [0, 1, 2, 3, 4, 5].map((i) => {
+        const car = new THREE.Mesh(carGeo, additive(i % 3 === 0 ? RED : MINT, 0.95));
+        group.add(car);
+        const c = -half - street / 2 + (i % (N + 1)) * pitch;
+        return {car, c, alongX: i % 2 === 0, phase: i * 0.83, speed: 0.25 + (i % 3) * 0.08};
     });
+
+    const l1 = withDelay(label(labels[0] ?? "OpenStreetMap"), 1);
+    l1.position.set(0, 2.6, 0);
+    const l2 = withDelay(label(labels[1] ?? "Multiplayer", "#6ef2c0", 0.85), 1.3);
+    l2.position.set(-4.4, 0.6, 2.2);
+    const l3 = withDelay(label(labels[2] ?? "Live city", "#58a6ff", 0.85), 1.6);
+    l3.position.set(4.4, 0.4, -2);
+    group.add(l1, l2, l3);
+    parts.push(l1, l2, l3);
 
     return {
         group,
         update(t) {
             assemble(parts, t);
-            for (const d of docs) {
-                const k = (t * 0.12 + d.phase) % 1;
-                const x = -8 + k * 16;
-                d.doc.position.set(x, -0.2 + Math.sin(k * Math.PI * 4) * 0.12, Math.sin(d.phase * 20) * 0.6);
-                d.doc.rotation.y = Math.sin(t + d.phase * 10) * 0.25;
-                // za každou bránou dokument "zesvětlá"
-                const stage = gates.filter((g) => x > g).length;
-                const mat = d.fill.material as THREE.MeshBasicMaterial;
-                mat.color.setHex(stage >= 3 ? MINT : stage >= 1 ? BLUE : CYAN);
-                mat.opacity = 0.08 + stage * 0.08;
-                d.doc.visible = t > 1;
+            for (const c of cars) {
+                const k = Math.sin(t * c.speed * 2 + c.phase * 4);
+                const along = k * (half + 0.4);
+                const lane = (Math.cos(t * c.speed * 2 + c.phase * 4) > 0 ? 1 : -1) * 0.1;
+                if (c.alongX) {
+                    c.car.position.set(along, base + 0.09, c.c + lane);
+                    c.car.rotation.y = 0;
+                } else {
+                    c.car.position.set(c.c + lane, base + 0.09, along);
+                    c.car.rotation.y = Math.PI / 2;
+                }
+                c.car.visible = t > 0.9;
             }
         },
         dispose: () => disposeGroup(group),
     };
 }
-
 const ORANGE = 0xffb35c;
 
 /** deterministické "náhodné" číslo, ať hologram vypadá pokaždé stejně */
@@ -1543,7 +1563,7 @@ const BUILDERS: Record<string, (labels: string[], image?: string) => Showcase> =
     overcup,
     armygame,
     worldee,
-    quadient,
+    drive,
     "stack-backend": stackBackend,
     "stack-frontend": stackFrontend,
     "stack-lang": stackLang,

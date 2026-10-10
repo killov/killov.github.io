@@ -2,13 +2,14 @@
 
 import React, {useCallback, useEffect, useRef, useState} from "react"
 import style from './style.module.scss';
-import bezec from './bezec.jpg'
+import photo from './zdenek.jpg'
 import worldeeLogo from "./img/worldee_com_logo.jpg"
 import quadientLogo from "./img/quadient_logo.jpg"
 import upLogo from './up.png'
 import spseLogo from './spse.png'
 import {LanguageProvider, useLanguage} from "./LanguageContext";
-import {Lang} from "./i18n";
+import {FsdButton, FsdOverlay, useFsd} from "./Fsd";
+import {LANG_PATH, Lang} from "./i18n";
 import {
     ProjectKind,
     about,
@@ -76,6 +77,7 @@ interface ShowcaseView {
     bullets: string[];
     tags: string[];
     href?: string;
+    hrefLabel?: string;
     labels: string[];
     image?: string;
 }
@@ -95,7 +97,7 @@ function resolveShowcase(key: ShowcaseKey, t: (k: string) => string): ShowcaseVi
         const id = projectId(p.title);
         return {
             scene: id, title: p.title, badge: t(`projects.kind.${p.kind}`), badgeClass: projectKindClass[p.kind],
-            bullets: N3.map((n) => t(`projects.${id}.b${n}`)), tags: p.tags, href: p.href,
+            bullets: N3.map((n) => t(`projects.${id}.b${n}`)), tags: p.tags, href: p.href, hrefLabel: t("projects.visit"),
             labels: N3.map((n) => t(`projects.${id}.l${n}`)),
         };
     }
@@ -115,9 +117,10 @@ function resolveShowcase(key: ShowcaseKey, t: (k: string) => string): ShowcaseVi
         scene, title: t(`sc.${scene}.title`), badge: t("sc.badge.about"), badgeClass: style.kindOss,
         bullets: N3.map((n) => t(`sc.${scene}.b${n}`)), tags: [],
         href: key.id === "repos" ? profile.github : undefined,
+        hrefLabel: "GitHub",
         // hvězdná mapa má navíc názvy dalších souhvězdí
         labels: (key.id === "stars" ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : N3).map((n) => t(`sc.${scene}.l${n}`)),
-        image: key.id === "pilot" ? bezec.src : undefined,
+        image: key.id === "pilot" ? photo.src : undefined,
     };
 }
 
@@ -226,11 +229,10 @@ const MachineReadableProfile: React.FC = () => {
                 <strong>Strong:</strong> C#/.NET, React, MobX, Next.js, AWS, Docker, MySQL, PostgreSQL, Redis, ScyllaDB.
             </p>
             <p>
-                <strong>Vlastní projekty:</strong> WorkMux (AI orchestrátor pro vývojáře), Ironbean (DI knihovna, 7⭐), OverCup (realtime portál 27 deskovek pro 2 hráče), ArmyGame (online strategická hra).
+                <strong>Vlastní projekty:</strong> WorkMux (cloudový AI orchestrátor pro vývojáře, www.workmux.com), Drive (multiplayer 3D jízda po Česku, drive.in.workmux.com), Ironbean (DI knihovna na npm, 7⭐), OverCup a ArmyGame (online hry, zatím nevydané).
             </p>
             <p>
-                <strong>Kontakt:</strong> z.mazurak35@gmail.com · github.com/killov.{" "}
-                <strong>Dostupnost:</strong> {t("contact.subtitle")}
+                <strong>Kontakt:</strong> z.mazurak35@gmail.com · github.com/killov.
             </p>
         </section>
     );
@@ -298,14 +300,24 @@ const BootSequence: React.FC = () => {
     );
 };
 
+/** skutečné odkazy na / a /en/ (ať je vyhledávače najdou), přepnutí ale proběhne bez reloadu 3D scény */
 const LangSwitch: React.FC = () => {
     const {lang, setLang} = useLanguage();
-    const onPick = (next: Lang) => () => setLang(next);
+    const link = (to: Lang, text: string) => (
+        <a
+            href={LANG_PATH[to]}
+            hrefLang={to}
+            className={`${style.langBtn} ${lang === to ? style.langBtnActive : ""}`}
+            aria-current={lang === to ? "page" : undefined}
+            data-lang={to}
+            onClick={(e) => { e.preventDefault(); setLang(to); }}
+        >{text}</a>
+    );
     return (
         <div className={style.langSwitch} role="group" aria-label="Language">
-            <button type="button" className={`${style.langBtn} ${lang === "cs" ? style.langBtnActive : ""}`} onClick={onPick("cs")} aria-pressed={lang === "cs"} data-lang="cs">CZ</button>
+            {link("cs", "CZ")}
             <span className={style.langDivider} aria-hidden="true">/</span>
-            <button type="button" className={`${style.langBtn} ${lang === "en" ? style.langBtnActive : ""}`} onClick={onPick("en")} aria-pressed={lang === "en"} data-lang="en">EN</button>
+            {link("en", "EN")}
         </div>
     );
 };
@@ -334,7 +346,7 @@ const ShowcaseCard: React.FC<{view: ShowcaseView; onClose: () => void}> = ({view
                 )}
                 <div className={style.showcaseActions}>
                     {view.href && (
-                        <a className={style.btnPrimary} href={view.href} target="_blank" rel="noreferrer">GitHub →</a>
+                        <a className={style.btnPrimary} href={view.href} target="_blank" rel="noreferrer">{view.hrefLabel} →</a>
                     )}
                     <button ref={closeRef} type="button" className={style.btnGhost} onClick={onClose}>
                         {t("showcase.close")} ✕
@@ -688,6 +700,11 @@ function Experience() {
 
     const gameCommand = useCallback((cmd: GameCommand) => universeRef.current?.gameCommand(cmd), []);
 
+    const fsd = useFsd({
+        goTo, openShowcase, closeShowcase: closeProject, enterGame, exitGame, gameCommand,
+        activeRef, t, lang, blocked: game || city !== null,
+    });
+
     const layoutPanels = useCallback(() => {
         // přesah textu panelů (na desktopu 0 — panel se vejde celý)
         // (měří se obsah, ne scrollHeight — ten nafukuje animovaná skenovací linka)
@@ -965,7 +982,7 @@ function Experience() {
     const nextId = STATIONS[Math.min(active + 1, LAST)].id;
 
     return (
-        <div className={style.layout} data-showcase={showcase !== null} data-game={game || city !== null}>
+        <div className={style.layout} data-showcase={showcase !== null} data-game={game || city !== null} data-fsd={fsd.on}>
             <canvas ref={canvasRef} className={style.canvas} aria-hidden="true"/>
             <div className={style.vignette} aria-hidden="true"/>
             <div className={style.scanlines} aria-hidden="true"/>
@@ -996,6 +1013,7 @@ function Experience() {
                     </ul>
                 </nav>
                 <div className={style.hudRight}>
+                    <FsdButton fsd={fsd} label={t("fsd.hint")}/>
                     <button type="button" className={style.gameBtn} onClick={enterGame} aria-keyshortcuts="G">
                         <span aria-hidden="true">🚀</span> {t("hud.game")}
                     </button>
@@ -1032,7 +1050,7 @@ function Experience() {
                                 style={{"--i": 1} as React.CSSProperties}
                                 {...clickable(() => openShowcase({kind: "about", id: "pilot"}), `${t("sc.about-pilot.title")} — ${t("projects.open3d")}`)}
                             >
-                                <img src={bezec.src} alt="Zdeněk Mazurák" width={132} height={168} loading="eager" decoding="async"/>
+                                <img src={photo.src} alt="Zdeněk Mazurák" width={132} height={168} loading="eager" decoding="async"/>
                                 <figcaption aria-hidden="true">PILOT · ID 0x7A</figcaption>
                                 <span className={style.open3dMark} aria-hidden="true">▶ 3D</span>
                             </figure>
@@ -1224,6 +1242,7 @@ function Experience() {
             </main>
 
             {showcase !== null && <ShowcaseCard view={resolveShowcase(showcase, t)} onClose={closeProject}/>}
+            <FsdOverlay fsd={fsd} t={t}/>
             {city && (
                 <CityHud
                     refs={cityRefs}
@@ -1276,9 +1295,9 @@ function Experience() {
     );
 }
 
-function App() {
+function App({lang}: {lang: Lang}) {
     return (
-        <LanguageProvider>
+        <LanguageProvider initialLang={lang}>
             <Experience/>
         </LanguageProvider>
     );

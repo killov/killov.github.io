@@ -1,30 +1,27 @@
 # Bc. Zdeněk Mazurák
 
-> Senior full-stack · Backend · Olomouc, Czech Republic
+> Senior backend · full-stack vývojář z Olomouce. Backend travel platformy Worldee, vlastní AI nástroj pro vývojáře WorkMux a 3D multiplayer hra Drive.
 
 Portfolio a profesionální profil Zdeňka Mazuráka (GitHub: `killov`).
-Open-source, AI nástroje pro vývojáře, kontakt a dostupnost.
+Česká verze: https://killov.github.io/ · English: https://killov.github.io/en/
 
 ## About
 
 Programuju od 12 let a stavím webové aplikace — nejvíc mě baví realtime aplikace.
 Teď jsem hodně přesedlal na AI a snažím se překonávat její limity.
 
-Jsem backend a platform inženýr z Olomouce. Přes 6 let držím celou vertikálu
-produkčního travel monolitu Worldee — PHP/Nette backend, React/MobX + Next.js
-frontend, C#/.NET mikroservices.
+Přes 6 let držím celou vertikálu produkčního travel monolitu Worldee — PHP/Nette
+backend, React/MobX + Next.js frontend, C#/.NET mikroservices.
 
-Vedle toho stavím vlastní open-source ([Ironbean](https://github.com/ironbean/ironbean), 7⭐)
-a AI nástroje pro vývojáře ([WorkMux](https://github.com/workmuxtool/workmux), vlastní Claude Code harness).
+Vedle toho stavím WorkMux (cloudový AI orchestrátor pro vývojáře) a hru Drive
+(multiplayer 3D jízda po skutečném Česku v prohlížeči).
 
 ## Contact
 
 - Email: z.mazurak35@gmail.com
 - GitHub: https://github.com/killov
 - LinkedIn: https://www.linkedin.com/in/zden%C4%9Bk-mazur%C3%A1k-582972162/
-- Location: Olomouc, Czechia · remote / hybrid
-
-Open novým příležitostem — remote, případně hybrid z Olomouce. Cílová sazba od 7 000 Kč / MD.
+- Location: Olomouc, Czechia
 
 ## Stack (expert)
 
@@ -36,17 +33,25 @@ React, MobX, Next.js, SCSS/Less, Dart/Flutter, C#/.NET, Java,
 Docker, AWS (S3/SQS/IAM), GitHub Actions, Playwright, MySQL,
 PostgreSQL, Redis, ScyllaDB, Prisma, Claude Code, MCP servery, Gemini, WorkMux.
 
-## Selected projects
+## Projects (live)
 
-- WorkMux — AI orchestrátor pro vývojáře (TypeScript, Go, Docker, Electron)
-- OverCup — realtime portál pro 2 hráče s 27 deskovkami (šachy, Go, reversi, Uno…); Next.js 15, socket.io, Redis, MySQL, Elo žebříček (soukromé repo)
-- ArmyGame — online strategická hra v prohlížeči (PHP, WebSocket, WebGL) — https://github.com/killov/armygame
-- Ironbean — DI knihovna pro TS/JS, 7⭐, 455 commitů za 6 let
-- Worldee.com — produkční travel monolit, 8 381 commitů od 2020
-- Quadient — enterprise software v C#/.NET
+- [WorkMux](https://www.workmux.com) — AI orchestrátor pro vývojáře: izolované Docker session, web terminály, Claude Code, Go agent přes mTLS, Electron
+- [Drive](https://drive.in.workmux.com/) — multiplayer 3D jízda v prohlížeči po Česku z OpenStreetMap a reálného terénu, živé město s MHD
+- [Worldee](https://www.worldee.com) — produkční travel platforma, hlavní backend vývojář (8 381 commitů od 2020)
+- [Ironbean](https://www.npmjs.com/package/ironbean) — DI knihovna pro TS/JS na npm, 7⭐, 455 commitů za 6 let
+
+## Projects (not released yet)
+
+- OverCup — realtime portál pro 2 hráče s 27 deskovkami (šachy, Go, reversi, Uno…); Next.js 15, socket.io, Redis, MySQL, Elo žebříček
+- ArmyGame — online strategická hra v prohlížeči (PHP, WebSocket, WebGL)
+
+## Experience
+
+- Worldee.com — Senior Backend Developer, 2019 – dosud
+- Quadient — Software Developer (C#/.NET), 2018 – 2020
 
 ## Optional
 
 - llms.txt: https://killov.github.io/llms.txt
 - sitemap: https://killov.github.io/sitemap.xml
-- JSON-LD: embedded in HTML, schema.org/Person
+- JSON-LD: embedded in HTML, schema.org/ProfilePage + Person

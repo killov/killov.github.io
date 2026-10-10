@@ -58,7 +58,8 @@ export type GameCommand =
     | {type: "speed"; value: number}
     | {type: "time"; value: number}
     | {type: "focus"; value: GameFocus}
-    | {type: "rocket"};
+    | {type: "rocket"}
+    | {type: "demoThrow"};
 
 export interface UniverseOptions {
     reducedMotion: boolean;
@@ -578,6 +579,7 @@ export class Universe {
         else if (cmd.type === "time") g.setTime(cmd.value);
         else if (cmd.type === "focus") g.setFocus(cmd.value);
         else if (cmd.type === "rocket") g.launchRocket();
+        else if (cmd.type === "demoThrow") g.demoThrow();
     }
 
     resize() {
