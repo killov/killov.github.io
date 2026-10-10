@@ -9,6 +9,7 @@ import upLogo from './up.png'
 import spseLogo from './spse.png'
 import {LanguageProvider, useLanguage} from "./LanguageContext";
 import {FsdButton, FsdOverlay, useFsd} from "./Fsd";
+import {playBlip, playTransition, useSound} from "./sound";
 import {LANG_PATH, Lang} from "./i18n";
 import {
     ProjectKind,
@@ -628,6 +629,7 @@ function Experience() {
 
     const openShowcase = useCallback((key: ShowcaseKey) => {
         const view = resolveShowcase(key, tRef.current);
+        playBlip();
         universeRef.current?.openShowcase(view.scene, view.labels, view.image);
         showcaseRef.current = key;
         setShowcase(key);
@@ -701,9 +703,19 @@ function Experience() {
     const gameCommand = useCallback((cmd: GameCommand) => universeRef.current?.gameCommand(cmd), []);
 
     const fsd = useFsd({
-        goTo, openShowcase, closeShowcase: closeProject, enterGame, exitGame, gameCommand,
+        goTo, openShowcase, closeShowcase: closeProject, enterGame, exitGame, openPlace, exitPlace, gameCommand,
         activeRef, t, lang, blocked: game || city !== null,
     });
+    const [sound, toggleSound] = useSound();
+
+    // přelet do jiné sekce = „tik-tak“ (ne při načtení stránky)
+    const soundedRef = useRef(active);
+    useEffect(() => {
+        if (soundedRef.current === active) return;
+        soundedRef.current = active;
+        if (showcase === null && !game && city === null) playTransition();
+    }, [active]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
     const layoutPanels = useCallback(() => {
         // přesah textu panelů (na desktopu 0 — panel se vejde celý)
@@ -1017,6 +1029,9 @@ function Experience() {
                     <button type="button" className={style.gameBtn} onClick={enterGame} aria-keyshortcuts="G">
                         <span aria-hidden="true">🚀</span> {t("hud.game")}
                     </button>
+                    <button type="button" className={style.soundBtn} onClick={toggleSound} aria-pressed={sound} title={t("tf.sound")}>
+                        <span aria-hidden="true">{sound ? "🔊" : "🔇"}</span> {t("tf.sound")}
+                    </button>
                     <span className={style.status}><span className={style.statusDot}/>{t("hud.status")}</span>
                     <LangSwitch/>
                 </div>
@@ -1256,6 +1271,7 @@ function Experience() {
                 />
             )}
             {game && <GameHud refs={gameRefs} command={gameCommand} onExit={exitGame} toast={toast}/>}
+
 
             <div className={style.telemetry} aria-hidden="true">
                 <div><span className={style.telKey}>{t("hud.sector")}</span> {pad2(active)}/{pad2(LAST)} · {t(NAV_KEYS[STATIONS[active].id]).toUpperCase()}</div>

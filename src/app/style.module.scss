@@ -294,6 +294,7 @@ $mobile: 800px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
     color: $good;
+    white-space: nowrap;
 
     @media (max-width: $mobile) {
         display: none;
@@ -1262,6 +1263,44 @@ $mobile: 800px;
     i:nth-child(3) { animation-delay: 0.3s; }
 }
 
+// vypínač zvuků v hlavičce
+.soundBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid $line;
+    background: transparent;
+    color: $text-dim;
+    font-family: $mono;
+    font-size: 0.68rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover,
+    &:focus-visible {
+        background: $cyan-soft;
+        outline: none;
+    }
+
+    &[aria-pressed="false"] {
+        color: $text-muted;
+        border-color: $line;
+    }
+
+    // na mobilu jen ikona
+    @media (max-width: $mobile) {
+        padding: 4px 7px;
+        font-size: 0;
+
+        span {
+            font-size: 0.8rem;
+        }
+    }
+}
+
 // === úvodní boot sekvence ===
 .boot {
     position: fixed;
@@ -1414,6 +1453,18 @@ $mobile: 800px;
         box-shadow: 0 0 22px rgba(56, 214, 255, 0.28);
         outline: none;
     }
+}
+
+// FSD ukazuje proklik: kartička se rozsvítí jako pod kurzorem a „cvakne“
+.fsdClick {
+    border-color: $line-strong !important;
+    background: rgba(56, 214, 255, 0.14) !important;
+    animation: fsdClick 0.8s ease-out 0.5s 2;
+}
+
+@keyframes fsdClick {
+    0% { box-shadow: 0 0 0 0 rgba(56, 214, 255, 0.75), 0 0 22px rgba(56, 214, 255, 0.3); }
+    100% { box-shadow: 0 0 0 18px rgba(56, 214, 255, 0), 0 0 22px rgba(56, 214, 255, 0.3); }
 }
 
 .open3dMark {

@@ -21,6 +21,8 @@ interface FsdStep {
     open?: FsdShowcase;
     /** krok ve hře: autopilot ji sám zapne a předvede raketu / hod Zemí */
     game?: "rocket" | "throw";
+    /** místo z CV: autopilot „klikne“ na kartičku a otevře ho ve 3D městě */
+    place?: string;
 }
 
 const station = (id: string) => STATIONS.findIndex((s) => s.id === id);
@@ -31,10 +33,11 @@ const ROUTE: FsdStep[] = [
     {station: station("about"), say: "fsd.say.about"},
     {station: station("stack"), say: "fsd.say.stack"},
     {station: station("projects"), say: "fsd.say.projects"},
+    {station: station("projects"), say: "fsd.say.worldee", open: project("Worldee")},
     {station: station("projects"), say: "fsd.say.workmux", open: project("WorkMux")},
     {station: station("projects"), say: "fsd.say.drive", open: project("Drive")},
     {station: station("experience"), say: "fsd.say.experience"},
-    {station: station("education"), say: "fsd.say.education"},
+    {station: station("education"), say: "fsd.say.education", place: "up"},
     {station: station("education"), say: "fsd.say.game", game: "rocket"},
     {station: station("education"), say: "fsd.say.throw", game: "throw"},
     {station: station("contact"), say: "fsd.say.contact"},
@@ -51,6 +54,40 @@ function voiceFor(lang: Lang): SpeechSynthesisVoice | undefined {
     if (typeof window === "undefined" || !window.speechSynthesis) return undefined;
     const voices = window.speechSynthesis.getVoices().filter((v) => v.lang.toLowerCase().startsWith(lang));
     return voices.find((v) => v.localService) ?? voices[0];
+}
+
+/** právě hrající dabing (public/fsd/{lang}/{key}.mp3 ze scripts/build-fsd-voice.mjs) */
+let dub: HTMLAudioElement | null = null;
+
+function hush() {
+    dub?.pause();
+    dub = null;
+    window.speechSynthesis?.cancel();
+}
+
+/** přehraje nadabovanou repliku; když mp3 nejde, přečte text hlasem prohlížeče */
+function say(key: string, text: string, lang: Lang): Promise<void> {
+    hush();
+    const audio = new Audio(`/fsd/${lang}/${key.replace("fsd.say.", "")}.mp3`);
+    dub = audio;
+    return new Promise((resolve) => {
+        let done = false;
+        const finish = () => {
+            if (done) return;
+            done = true;
+            resolve();
+        };
+        audio.onended = finish;
+        audio.onpause = finish;
+        audio.onerror = () => {
+            if (dub !== audio) return finish();
+            dub = null;
+            void speak(text, lang).then(finish);
+        };
+        audio.play().catch(() => audio.onerror?.(new Event("error")));
+        // pojistka, kdyby onended nepřišlo
+        window.setTimeout(finish, 30000);
+    });
 }
 
 /** přečte text nahlas; resolve po dočtení (nebo hned, když hlas není) */
@@ -78,6 +115,8 @@ interface FsdOptions {
     closeShowcase: () => void;
     enterGame: () => void;
     exitGame: () => void;
+    openPlace: (id: string) => void;
+    exitPlace: () => void;
     gameCommand: (cmd: GameCommand) => void;
     activeRef: React.MutableRefObject<number>;
     t: (key: string) => string;
@@ -97,7 +136,7 @@ export interface FsdState {
     stop: () => void;
 }
 
-export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, gameCommand, activeRef, t, lang, blocked}: FsdOptions): FsdState {
+export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, openPlace, exitPlace, gameCommand, activeRef, t, lang, blocked}: FsdOptions): FsdState {
     const [on, setOn] = useState(false);
     const [step, setStep] = useState(0);
     const [text, setText] = useState("");
@@ -114,6 +153,8 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
     const messageTimer = useRef(0);
     /** hru zapnul autopilot (ne uživatel) — pak ho nevypíná */
     const gameRef = useRef(false);
+    /** 3D město otevřel autopilot */
+    const placeRef = useRef(false);
 
     const flash = useCallback((key: string) => {
         setMessage(tRef.current(key));
@@ -126,10 +167,22 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
         runRef.current++;
         onRef.current = false;
         gameRef.current = false;
+        placeRef.current = false;
         setOn(false);
-        window.speechSynthesis?.cancel();
+        hush();
         flash(key);
     }, [flash]);
+
+    /** ukáže proklik: kartička místa se rozbliká jako pod kurzorem, pak se otevře 3D město */
+    const showPlace = useCallback(async (id: string, alive: () => boolean) => {
+        const card = document.querySelector<HTMLElement>(`[data-place="${id}"]`);
+        card?.classList.add(style.fsdClick);
+        await sleep(1600);
+        card?.classList.remove(style.fsdClick);
+        if (!alive()) return;
+        placeRef.current = true;
+        openPlace(id);
+    }, [openPlace]);
 
     const engage = useCallback(async () => {
         const id = ++runRef.current;
@@ -145,6 +198,11 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
             setStep(i);
             setText("");
             closeShowcase();
+            if (!s.place && placeRef.current) {
+                placeRef.current = false;
+                exitPlace();
+                await sleep(1400);
+            }
             if (s.game && !gameRef.current) {
                 gameRef.current = true;
                 enterGame();
@@ -173,17 +231,18 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
             const line = tRef.current(s.say);
             setText(line);
             await Promise.all([
-                voiceRef.current ? speak(line, langRef.current) : Promise.resolve(),
+                voiceRef.current ? say(s.say, line, langRef.current) : Promise.resolve(),
                 sleep(readingTime(line)),
+                s.place ? showPlace(s.place, alive) : Promise.resolve(),
             ]);
             if (!alive()) return;
             // po hodu chvíli počkej, ať je vidět zásah Slunce
-            await sleep(s.game === "throw" ? 2500 : 400);
+            await sleep(s.game === "throw" || s.place ? 2500 : 400);
             if (!alive()) return;
         }
         closeShowcase();
         disengage("fsd.arrived");
-    }, [goTo, openShowcase, closeShowcase, enterGame, exitGame, gameCommand, activeRef, disengage]);
+    }, [goTo, openShowcase, closeShowcase, enterGame, exitGame, gameCommand, activeRef, disengage, showPlace]);
 
     const toggle = useCallback(() => {
         if (onRef.current) disengage("fsd.off");
@@ -192,7 +251,7 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
 
     const toggleVoice = useCallback(() => {
         setVoice((v) => {
-            if (v) window.speechSynthesis?.cancel();
+            if (v) hush();
             return !v;
         });
     }, []);
@@ -233,13 +292,13 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
 
     // hra nebo město přebírá kameru
     useEffect(() => {
-        if (blocked && !gameRef.current) disengage("fsd.off");
+        if (blocked && !gameRef.current && !placeRef.current) disengage("fsd.off");
     }, [blocked, disengage]);
 
     useEffect(() => () => {
         runRef.current++;
         window.clearTimeout(messageTimer.current);
-        window.speechSynthesis?.cancel();
+        hush();
     }, []);
 
     return {on, step, text, voice, message, toggle, toggleVoice, stop};
