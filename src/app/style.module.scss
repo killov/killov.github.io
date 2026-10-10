@@ -2184,7 +2184,7 @@ $fsd-light: #8fb0ff;
     50% { opacity: 1; }
 }
 
-.layout[data-fsd="true"] .hint {
+.layout[data-autopilot="true"] .hint {
     opacity: 0 !important;
 }
 
@@ -2330,7 +2330,7 @@ $fsd-light: #8fb0ff;
 
 // na mobilu je karta hologramu dole — během FSD ji zvedni nad lištu
 @media (max-width: $mobile) {
-    .layout[data-fsd="true"] .showcase {
+    .layout[data-autopilot="true"] .showcase {
         padding-bottom: 180px;
     }
 }

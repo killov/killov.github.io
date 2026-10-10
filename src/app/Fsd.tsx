@@ -56,37 +56,74 @@ function voiceFor(lang: Lang): SpeechSynthesisVoice | undefined {
     return voices.find((v) => v.localService) ?? voices[0];
 }
 
-/** právě hrající dabing (public/fsd/{lang}/{key}.mp3 ze scripts/build-fsd-voice.mjs) */
+/*
+ * Dabing (public/fsd/{lang}/{key}.mp3 ze scripts/build-fsd-voice.mjs) hraje
+ * jeden sdílený <audio>. Mobilní prohlížeče (hlavně iOS) pustí zvuk jen
+ * z kliku — element se proto „odemkne“ při zapnutí FSD a pak se mu jen mění
+ * src. Nový Audio() o pár sekund později by se nerozjel a jízda by stála.
+ */
 let dub: HTMLAudioElement | null = null;
+/** dokončí právě hranou repliku — hush() tak jízdu hned pustí dál */
+let dubDone: (() => void) | null = null;
+
+/** volat synchronně z kliku / klávesy: odemkne dabing i hlas prohlížeče */
+function unlockVoice(lang: Lang) {
+    if (!dub) {
+        dub = new Audio();
+        dub.muted = true;
+        dub.src = `/fsd/${lang}/hero.mp3`;
+        const audio = dub;
+        audio.play().then(() => {
+            if (!dubDone) audio.pause();
+        }).catch(() => undefined).finally(() => {
+            audio.muted = false;
+        });
+    }
+    if (window.speechSynthesis && typeof SpeechSynthesisUtterance !== "undefined") {
+        const u = new SpeechSynthesisUtterance(" ");
+        u.volume = 0;
+        window.speechSynthesis.speak(u);
+    }
+}
 
 function hush() {
+    const done = dubDone;
+    dubDone = null;
     dub?.pause();
-    dub = null;
+    done?.();
     window.speechSynthesis?.cancel();
 }
 
 /** přehraje nadabovanou repliku; když mp3 nejde, přečte text hlasem prohlížeče */
 function say(key: string, text: string, lang: Lang): Promise<void> {
     hush();
-    const audio = new Audio(`/fsd/${lang}/${key.replace("fsd.say.", "")}.mp3`);
-    dub = audio;
+    if (!dub) dub = new Audio();
+    const audio = dub;
     return new Promise((resolve) => {
         let done = false;
         const finish = () => {
             if (done) return;
             done = true;
+            if (dubDone === finish) dubDone = null;
+            audio.removeEventListener("ended", finish);
+            audio.removeEventListener("error", fallback);
             resolve();
         };
-        audio.onended = finish;
-        audio.onpause = finish;
-        audio.onerror = () => {
-            if (dub !== audio) return finish();
-            dub = null;
+        const fallback = () => {
+            if (done || dubDone !== finish) return;
+            dubDone = null;
+            audio.removeEventListener("ended", finish);
+            audio.removeEventListener("error", fallback);
             void speak(text, lang).then(finish);
         };
-        audio.play().catch(() => audio.onerror?.(new Event("error")));
-        // pojistka, kdyby onended nepřišlo
-        window.setTimeout(finish, 30000);
+        dubDone = finish;
+        audio.addEventListener("ended", finish);
+        audio.addEventListener("error", fallback);
+        audio.muted = false;
+        audio.src = `/fsd/${lang}/${key.replace("fsd.say.", "")}.mp3`;
+        audio.play().catch(fallback);
+        // pojistka, kdyby se zvuk nerozjel nebo onended nepřišlo
+        window.setTimeout(finish, Math.max(6000, text.length * 120));
     });
 }
 
@@ -155,6 +192,7 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
     const gameRef = useRef(false);
     /** 3D město otevřel autopilot */
     const placeRef = useRef(false);
+    const stepRef = useRef(0);
 
     const flash = useCallback((key: string) => {
         setMessage(tRef.current(key));
@@ -184,7 +222,7 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
         openPlace(id);
     }, [openPlace]);
 
-    const engage = useCallback(async () => {
+    const engage = useCallback(async (start = 0) => {
         const id = ++runRef.current;
         const alive = () => runRef.current === id;
         onRef.current = true;
@@ -193,8 +231,9 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
         // Chrome načítá hlasy líně — první getVoices() bývá prázdné
         window.speechSynthesis?.getVoices();
 
-        for (let i = 0; i < ROUTE.length; i++) {
+        for (let i = start; i < ROUTE.length; i++) {
             const s = ROUTE[i];
+            stepRef.current = i;
             setStep(i);
             setText("");
             closeShowcase();
@@ -246,23 +285,84 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
 
     const toggle = useCallback(() => {
         if (onRef.current) disengage("fsd.off");
-        else if (!blocked) void engage();
+        else if (!blocked) {
+            unlockVoice(langRef.current);
+            void engage();
+        }
     }, [blocked, engage, disengage]);
 
     const toggleVoice = useCallback(() => {
-        setVoice((v) => {
-            if (v) hush();
-            return !v;
-        });
+        if (voiceRef.current) hush();
+        else unlockVoice(langRef.current);
+        setVoice((v) => !v);
     }, []);
 
     const stop = useCallback(() => disengage("fsd.off"), [disengage]);
 
-    // klávesa F zapíná/vypíná; jakýkoliv jiný zásah = převzetí řízení
+    /** scroll během jízdy: dolů = další zastávka, nahoru = předchozí */
+    const skip = useCallback((dir: 1 | -1) => {
+        if (!onRef.current) return;
+        const next = stepRef.current + dir;
+        if (next < 0) return;
+        hush();
+        if (next >= ROUTE.length) {
+            closeShowcase();
+            disengage("fsd.arrived");
+        } else {
+            void engage(next);
+        }
+    }, [engage, closeShowcase, disengage]);
+
+    // klávesa F zapíná/vypíná; scroll přeskakuje zastávky; jiný zásah = převzetí řízení
     useEffect(() => {
         const fromFsd = (e: Event) => (e.target as HTMLElement | null)?.closest?.("[data-fsd]");
         const takeover = (e: Event) => {
             if (onRef.current && !fromFsd(e)) disengage("fsd.takeover");
+        };
+        // kolečko / touchpad: jedno gesto (i s dojezdem setrvačnosti) = jeden skok
+        let wheelAt = 0;
+        let wheelUsed = false;
+        let wheelSum = 0;
+        const onWheel = (e: WheelEvent) => {
+            if (!onRef.current) return;
+            e.preventDefault();
+            const now = performance.now();
+            if (now - wheelAt > 300) {
+                wheelUsed = false;
+                wheelSum = 0;
+            }
+            wheelAt = now;
+            wheelSum += e.deltaY;
+            if (wheelUsed || Math.abs(wheelSum) < 30) return;
+            wheelUsed = true;
+            skip(wheelSum > 0 ? 1 : -1);
+        };
+        // dotyk: svislé švihnutí = skok, ťuknutí mimo FSD = převzetí řízení
+        let touch: {x: number; y: number; fsd: boolean; moved: boolean; skipped: boolean} | null = null;
+        const onTouchStart = (e: TouchEvent) => {
+            const t0 = e.touches[0];
+            touch = e.touches.length === 1 && t0 ? {x: t0.clientX, y: t0.clientY, fsd: !!fromFsd(e), moved: false, skipped: false} : null;
+        };
+        const onTouchMove = (e: TouchEvent) => {
+            if (!onRef.current || !touch) return;
+            if (e.cancelable) e.preventDefault();
+            const t1 = e.touches[0];
+            if (touch.skipped || !t1) return;
+            const dx = t1.clientX - touch.x;
+            const dy = t1.clientY - touch.y;
+            if (Math.abs(dx) > 12 || Math.abs(dy) > 12) touch.moved = true;
+            if (Math.abs(dy) > 40 && Math.abs(dy) > Math.abs(dx)) {
+                touch.skipped = true;
+                skip(dy < 0 ? 1 : -1);
+            }
+        };
+        const onTouchEnd = () => {
+            if (onRef.current && touch && !touch.moved && !touch.fsd) disengage("fsd.takeover");
+            touch = null;
+        };
+        // dotyk řeší touch* výše, pointerdown jen myš a pero
+        const onPointerDown = (e: PointerEvent) => {
+            if (e.pointerType !== "touch") takeover(e);
         };
         const onKey = (e: KeyboardEvent) => {
             const target = e.target as HTMLElement;
@@ -277,18 +377,23 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
             if (onRef.current) disengage("fsd.takeover");
         };
         window.addEventListener("keydown", onKey);
-        // kolečko scrolluje stránku vždycky — i nad tlačítkem FSD
-        const onWheel = () => onRef.current && disengage("fsd.takeover");
-        window.addEventListener("wheel", onWheel, {passive: true});
-        window.addEventListener("touchstart", takeover, {passive: true});
-        window.addEventListener("pointerdown", takeover);
+        // scroll by během jízdy přepral autopilota — místo něj se skáče po zastávkách
+        window.addEventListener("wheel", onWheel, {passive: false});
+        window.addEventListener("touchstart", onTouchStart, {passive: true});
+        window.addEventListener("touchmove", onTouchMove, {passive: false});
+        window.addEventListener("touchend", onTouchEnd, {passive: true});
+        window.addEventListener("touchcancel", onTouchEnd, {passive: true});
+        window.addEventListener("pointerdown", onPointerDown);
         return () => {
             window.removeEventListener("keydown", onKey);
             window.removeEventListener("wheel", onWheel);
-            window.removeEventListener("touchstart", takeover);
-            window.removeEventListener("pointerdown", takeover);
+            window.removeEventListener("touchstart", onTouchStart);
+            window.removeEventListener("touchmove", onTouchMove);
+            window.removeEventListener("touchend", onTouchEnd);
+            window.removeEventListener("touchcancel", onTouchEnd);
+            window.removeEventListener("pointerdown", onPointerDown);
         };
-    }, [toggle, disengage]);
+    }, [toggle, disengage, skip]);
 
     // hra nebo město přebírá kameru
     useEffect(() => {

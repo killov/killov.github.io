@@ -994,7 +994,7 @@ function Experience() {
     const nextId = STATIONS[Math.min(active + 1, LAST)].id;
 
     return (
-        <div className={style.layout} data-showcase={showcase !== null} data-game={game || city !== null} data-fsd={fsd.on}>
+        <div className={style.layout} data-showcase={showcase !== null} data-game={game || city !== null} data-autopilot={fsd.on}>
             <canvas ref={canvasRef} className={style.canvas} aria-hidden="true"/>
             <div className={style.vignette} aria-hidden="true"/>
             <div className={style.scanlines} aria-hidden="true"/>
