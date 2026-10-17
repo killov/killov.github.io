@@ -42,7 +42,7 @@ PostgreSQL, Redis, ScyllaDB, Prisma, Claude Code, MCP servery, Gemini, WorkMux.
 
 ## Projects (not released yet)
 
-- OverCup — realtime portál pro 2 hráče s 27 deskovkami (šachy, Go, reversi, Uno…); Next.js 15, socket.io, Redis, MySQL, Elo žebříček
+- [OverCup](https://www.overcup.net/) — realtime portál pro 2 hráče s 32 hrami (šachy, Go, reversi, Uno…); Next.js 15, socket.io, Redis, MySQL, Elo žebříček
 - ArmyGame — online strategická hra v prohlížeči (PHP, WebSocket, WebGL)
 
 ## Experience

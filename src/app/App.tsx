@@ -8,10 +8,12 @@ import quadientLogo from "./img/quadient_logo.jpg"
 import upLogo from './up.png'
 import spseLogo from './spse.png'
 import {LanguageProvider, useLanguage} from "./LanguageContext";
-import {FsdButton, FsdOverlay, useFsd} from "./Fsd";
+import {FsdButton, FsdOverlay, unlockVoice, useFsd} from "./Fsd";
+import {DemoFeed, DemoViewer} from "./Demo";
 import {playBlip, playTransition, useSound} from "./sound";
 import {LANG_PATH, Lang} from "./i18n";
 import {
+    DemoItem,
     ProjectKind,
     about,
     education,
@@ -81,6 +83,9 @@ interface ShowcaseView {
     hrefLabel?: string;
     labels: string[];
     image?: string;
+    /** index projektu s reálnými ukázkami (jen u projektů, které je mají) */
+    demoProject?: number;
+    demos?: DemoItem[];
 }
 
 const N3 = [1, 2, 3];
@@ -100,6 +105,7 @@ function resolveShowcase(key: ShowcaseKey, t: (k: string) => string): ShowcaseVi
             scene: id, title: p.title, badge: t(`projects.kind.${p.kind}`), badgeClass: projectKindClass[p.kind],
             bullets: N3.map((n) => t(`projects.${id}.b${n}`)), tags: p.tags, href: p.href, hrefLabel: t("projects.visit"),
             labels: N3.map((n) => t(`projects.${id}.l${n}`)),
+            demoProject: p.demos ? key.index : undefined, demos: p.demos,
         };
     }
     if (key.kind === "stack") {
@@ -230,7 +236,7 @@ const MachineReadableProfile: React.FC = () => {
                 <strong>Strong:</strong> C#/.NET, React, MobX, Next.js, AWS, Docker, MySQL, PostgreSQL, Redis, ScyllaDB.
             </p>
             <p>
-                <strong>Vlastní projekty:</strong> WorkMux (cloudový AI orchestrátor pro vývojáře, www.workmux.com), Drive (multiplayer 3D jízda po Česku, drive.in.workmux.com), Ironbean (DI knihovna na npm, 7⭐), OverCup a ArmyGame (online hry, zatím nevydané).
+                <strong>Vlastní projekty:</strong> WorkMux (cloudový AI orchestrátor pro vývojáře, www.workmux.com), Drive (multiplayer 3D jízda po Česku, drive.in.workmux.com), Ironbean (DI knihovna na npm, 7⭐), OverCup (online deskovky pro dva, www.overcup.net), ArmyGame (online strategie, zatím nevydaná).
             </p>
             <p>
                 <strong>Kontakt:</strong> z.mazurak35@gmail.com · github.com/killov.
@@ -324,7 +330,7 @@ const LangSwitch: React.FC = () => {
 };
 
 /** popis otevřeného projektu vedle 3D hologramu — krátce, ať to není čtení */
-const ShowcaseCard: React.FC<{view: ShowcaseView; onClose: () => void}> = ({view, onClose}) => {
+const ShowcaseCard: React.FC<{view: ShowcaseView; demoOpen: boolean; onClose: () => void; onDemo: (project: number, start: number) => void}> = ({view, demoOpen, onClose, onDemo}) => {
     const {t} = useLanguage();
     const closeRef = useRef<HTMLButtonElement>(null);
     useEffect(() => {
@@ -344,6 +350,9 @@ const ShowcaseCard: React.FC<{view: ShowcaseView; onClose: () => void}> = ({view
                     <ul className={style.tagWrap}>
                         {view.tags.map((tag) => <li key={tag} className={style.tag}>{tag}</li>)}
                     </ul>
+                )}
+                {view.demos && view.demoProject !== undefined && (
+                    <DemoFeed demos={view.demos} title={view.title} paused={demoOpen} onOpen={(i) => onDemo(view.demoProject!, i)}/>
                 )}
                 <div className={style.showcaseActions}>
                     {view.href && (
@@ -573,6 +582,11 @@ function Experience() {
     const readsRef = useRef<number[]>(STATIONS.map(() => 0));
     const [readExtra, setReadExtra] = useState(0);
     const showcaseRef = useRef<ShowcaseKey | null>(null);
+    /** otevřené kino s reálnými ukázkami projektu */
+    const [demo, setDemo] = useState<{project: number; start: number; guided: boolean} | null>(null);
+    const demoRef = useRef(false);
+    /** FSD čeká, až ukázky doběhnou */
+    const demoDoneRef = useRef<(() => void) | null>(null);
     const gameRef = useRef(false);
     const [city, setCity] = useState<{place: string; driving: boolean; loading: boolean} | null>(null);
     const [cityToast, setCityToast] = useState<string | null>(null);
@@ -639,6 +653,38 @@ function Experience() {
 
     const openProject = useCallback((i: number) => openShowcase({kind: "project", index: i}), [openShowcase]);
 
+    const showDemo = useCallback((project: number, start: number, guided: boolean) => {
+        demoDoneRef.current?.();
+        demoDoneRef.current = null;
+        demoRef.current = true;
+        setDemo({project, start, guided});
+        document.documentElement.style.overflow = "hidden";
+    }, []);
+
+    /** z kliku — odemkne zvuk komentáře (iOS pustí audio jen z gesta) */
+    const openDemo = useCallback((project: number, start: number) => {
+        playBlip();
+        unlockVoice(langRef.current);
+        showDemo(project, start, false);
+    }, [showDemo]);
+
+    /** FSD: okomentované ukázky projektu, resolve po posledním záběru / zavření */
+    const playDemo = useCallback((project: number) => new Promise<void>((resolve) => {
+        showDemo(project, 0, true);
+        demoDoneRef.current = resolve;
+    }), [showDemo]);
+
+    const closeDemo = useCallback(() => {
+        const done = demoDoneRef.current;
+        demoDoneRef.current = null;
+        done?.();
+        if (!demoRef.current) return;
+        demoRef.current = false;
+        setDemo(null);
+        // pod kinem může pořád viset hologram, ten scroll drží zamčený dál
+        if (showcaseRef.current === null) document.documentElement.style.overflow = "";
+    }, []);
+
     const closeProject = useCallback(() => {
         universeRef.current?.closeShowcase();
         showcaseRef.current = null;
@@ -703,10 +749,15 @@ function Experience() {
     const gameCommand = useCallback((cmd: GameCommand) => universeRef.current?.gameCommand(cmd), []);
 
     const fsd = useFsd({
-        goTo, openShowcase, closeShowcase: closeProject, enterGame, exitGame, openPlace, exitPlace, gameCommand,
+        goTo, openShowcase, closeShowcase: closeProject, enterGame, exitGame, openPlace, exitPlace, gameCommand, playDemo, closeDemo,
         activeRef, t, lang, blocked: game || city !== null,
     });
     const [sound, toggleSound] = useSound();
+
+    // zapnutý autopilot si ukázky pouští sám — ručně otevřené kino zavře
+    useEffect(() => {
+        if (fsd.on && demoRef.current && !demo?.guided) closeDemo();
+    }, [fsd.on]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // přelet do jiné sekce = „tik-tak“ (ne při načtení stránky)
     const soundedRef = useRef(active);
@@ -875,6 +926,8 @@ function Experience() {
             universe?.setPointer((e.clientX / window.innerWidth) * 2 - 1, -((e.clientY / window.innerHeight) * 2 - 1));
         };
         const onKey = (e: KeyboardEvent) => {
+            // kino si klávesy obsluhuje samo (Demo.tsx)
+            if (demoRef.current) return;
             if (cityRef.current) {
                 if (e.key === "Escape") exitPlace();
                 return;
@@ -963,10 +1016,10 @@ function Experience() {
     useEffect(() => {
         panelRefs.current.forEach((el, i) => {
             if (!el) return;
-            if (i === active && showcase === null && !game && !city) el.removeAttribute("inert");
+            if (i === active && showcase === null && demo === null && !game && !city) el.removeAttribute("inert");
             else el.setAttribute("inert", "");
         });
-    }, [active, showcase, game, city]);
+    }, [active, showcase, demo, game, city]);
 
     const setPanelRef = (i: number) => (el: HTMLElement | null) => {
         panelRefs.current[i] = el;
@@ -1139,9 +1192,21 @@ function Experience() {
                                         {p.tags.map((tag) => <li key={tag} className={style.tag}>{tag}</li>)}
                                     </ul>
                                     <div className={style.tileActions}>
-                                        <button type="button" className={style.tile3d} onClick={(e) => { e.stopPropagation(); openProject(i); }}>
-                                            ▶ {t("projects.open3d")}
-                                        </button>
+                                        <div className={style.tileButtons}>
+                                            <button type="button" className={style.tile3d} onClick={(e) => { e.stopPropagation(); openProject(i); }}>
+                                                ▶ {t("projects.open3d")}
+                                            </button>
+                                            {p.demos && (
+                                                <button
+                                                    type="button"
+                                                    className={style.tileDemo}
+                                                    onClick={(e) => { e.stopPropagation(); openDemo(i, 0); }}
+                                                    aria-label={`${t("demo.title")} — ${p.title}`}
+                                                >
+                                                    <span className={style.demoRec} aria-hidden="true"/> {t("demo.open")}
+                                                </button>
+                                            )}
+                                        </div>
                                         {p.href && (
                                             <a className={style.tileLink} href={p.href} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
                                                 {t("projects.visit")} <span aria-hidden="true">→</span>
@@ -1256,7 +1321,20 @@ function Experience() {
                 </div>
             </main>
 
-            {showcase !== null && <ShowcaseCard view={resolveShowcase(showcase, t)} onClose={closeProject}/>}
+            {showcase !== null && <ShowcaseCard view={resolveShowcase(showcase, t)} demoOpen={demo !== null} onClose={closeProject} onDemo={openDemo}/>}
+            {demo !== null && (
+                <DemoViewer
+                    key={`${demo.project}-${demo.guided}`}
+                    demos={projects[demo.project].demos!}
+                    title={projects[demo.project].title}
+                    href={projects[demo.project].href}
+                    start={demo.start}
+                    guided={demo.guided && fsd.on}
+                    voice={demo.guided ? fsd.voice : undefined}
+                    onDone={closeDemo}
+                    onClose={closeDemo}
+                />
+            )}
             <FsdOverlay fsd={fsd} t={t}/>
             {city && (
                 <CityHud

@@ -23,6 +23,8 @@ interface FsdStep {
     game?: "rocket" | "throw";
     /** místo z CV: autopilot „klikne“ na kartičku a otevře ho ve 3D městě */
     place?: string;
+    /** po replice pustí okomentované reálné ukázky otevřeného projektu */
+    demo?: boolean;
 }
 
 const station = (id: string) => STATIONS.findIndex((s) => s.id === id);
@@ -34,8 +36,9 @@ const ROUTE: FsdStep[] = [
     {station: station("stack"), say: "fsd.say.stack"},
     {station: station("projects"), say: "fsd.say.projects"},
     {station: station("projects"), say: "fsd.say.worldee", open: project("Worldee")},
-    {station: station("projects"), say: "fsd.say.workmux", open: project("WorkMux")},
-    {station: station("projects"), say: "fsd.say.drive", open: project("Drive")},
+    {station: station("projects"), say: "fsd.say.workmux", open: project("WorkMux"), demo: true},
+    {station: station("projects"), say: "fsd.say.drive", open: project("Drive"), demo: true},
+    {station: station("projects"), say: "fsd.say.overcup", open: project("OverCup"), demo: true},
     {station: station("experience"), say: "fsd.say.experience"},
     {station: station("education"), say: "fsd.say.education", place: "up"},
     {station: station("education"), say: "fsd.say.game", game: "rocket"},
@@ -66,8 +69,19 @@ let dub: HTMLAudioElement | null = null;
 /** dokončí právě hranou repliku — hush() tak jízdu hned pustí dál */
 let dubDone: (() => void) | null = null;
 
+/*
+ * manifest.json drží text, ze kterého mp3 vzniklo. Když se replika v i18n
+ * změní a dabing se ještě nepřegeneroval, stará mp3 by říkala něco jiného
+ * než titulek — pak radši čte hlas prohlížeče.
+ */
+let manifest: Promise<Record<string, string>> | null = null;
+const loadManifest = () => manifest ??= fetch("/fsd/manifest.json")
+    .then((r) => (r.ok ? r.json() : {}))
+    .catch(() => ({}));
+
 /** volat synchronně z kliku / klávesy: odemkne dabing i hlas prohlížeče */
-function unlockVoice(lang: Lang) {
+export function unlockVoice(lang: Lang) {
+    void loadManifest();
     if (!dub) {
         dub = new Audio();
         dub.muted = true;
@@ -86,7 +100,7 @@ function unlockVoice(lang: Lang) {
     }
 }
 
-function hush() {
+export function hush() {
     const done = dubDone;
     dubDone = null;
     dub?.pause();
@@ -95,7 +109,7 @@ function hush() {
 }
 
 /** přehraje nadabovanou repliku; když mp3 nejde, přečte text hlasem prohlížeče */
-function say(key: string, text: string, lang: Lang): Promise<void> {
+export function say(key: string, text: string, lang: Lang): Promise<void> {
     hush();
     if (!dub) dub = new Audio();
     const audio = dub;
@@ -119,9 +133,17 @@ function say(key: string, text: string, lang: Lang): Promise<void> {
         dubDone = finish;
         audio.addEventListener("ended", finish);
         audio.addEventListener("error", fallback);
-        audio.muted = false;
-        audio.src = `/fsd/${lang}/${key.replace("fsd.say.", "")}.mp3`;
-        audio.play().catch(fallback);
+        const id = `${lang}/${key.replace("fsd.say.", "")}`;
+        void loadManifest().then((m) => {
+            if (dubDone !== finish) return;
+            if (m[id] !== text) {
+                fallback();
+                return;
+            }
+            audio.muted = false;
+            audio.src = `/fsd/${id}.mp3`;
+            audio.play().catch(fallback);
+        });
         // pojistka, kdyby se zvuk nerozjel nebo onended nepřišlo
         window.setTimeout(finish, Math.max(6000, text.length * 120));
     });
@@ -155,6 +177,9 @@ interface FsdOptions {
     openPlace: (id: string) => void;
     exitPlace: () => void;
     gameCommand: (cmd: GameCommand) => void;
+    /** okomentované ukázky projektu; resolve, až doběhnou (nebo je někdo zavře) */
+    playDemo: (project: number) => Promise<void>;
+    closeDemo: () => void;
     activeRef: React.MutableRefObject<number>;
     t: (key: string) => string;
     lang: Lang;
@@ -173,7 +198,7 @@ export interface FsdState {
     stop: () => void;
 }
 
-export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, openPlace, exitPlace, gameCommand, activeRef, t, lang, blocked}: FsdOptions): FsdState {
+export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, openPlace, exitPlace, gameCommand, playDemo, closeDemo, activeRef, t, lang, blocked}: FsdOptions): FsdState {
     const [on, setOn] = useState(false);
     const [step, setStep] = useState(0);
     const [text, setText] = useState("");
@@ -236,6 +261,7 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
             stepRef.current = i;
             setStep(i);
             setText("");
+            closeDemo();
             closeShowcase();
             if (!s.place && placeRef.current) {
                 placeRef.current = false;
@@ -275,13 +301,17 @@ export function useFsd({goTo, openShowcase, closeShowcase, enterGame, exitGame, 
                 s.place ? showPlace(s.place, alive) : Promise.resolve(),
             ]);
             if (!alive()) return;
+            if (s.demo && s.open && s.open.index >= 0) {
+                await playDemo(s.open.index);
+                if (!alive()) return;
+            }
             // po hodu chvíli počkej, ať je vidět zásah Slunce
             await sleep(s.game === "throw" || s.place ? 2500 : 400);
             if (!alive()) return;
         }
         closeShowcase();
         disengage("fsd.arrived");
-    }, [goTo, openShowcase, closeShowcase, enterGame, exitGame, gameCommand, activeRef, disengage, showPlace]);
+    }, [goTo, openShowcase, closeShowcase, enterGame, exitGame, gameCommand, playDemo, closeDemo, activeRef, disengage, showPlace]);
 
     const toggle = useCallback(() => {
         if (onRef.current) disengage("fsd.off");

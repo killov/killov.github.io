@@ -36,6 +36,37 @@ export interface StackCategory {
     tags: string[];
 }
 
+/** výřez záběru v % šířky / výšky: [x, y, w, h] — kam se kamera přiblíží */
+export type DemoBox = [number, number, number, number];
+
+/**
+ * Komentář k záběru: u videa zazní v čase `at` (s), u obrázku jdou komentáře
+ * po sobě. Replika je klíč fsd.say.demo-* — nadabuje ji build-fsd-voice.mjs.
+ */
+export interface DemoCue {
+    at?: number;
+    say: string;
+    box?: DemoBox;
+}
+
+/**
+ * Reálná ukázka z produkce (public/demos/<projekt>/). `src` je cesta bez
+ * přípony: video = .webm + .mp4 a plakát .webp, obrázek = .webp.
+ * `localized` = soubor existuje pro každý jazyk zvlášť (src-cs, src-en).
+ */
+export interface DemoItem {
+    type: "video" | "image";
+    src: string;
+    /** šířka / výška záběru — výřezy komentářů jsou v % právě tohohle rámu */
+    aspect: number;
+    /** klíč do i18n — nadpis záběru */
+    captionKey: string;
+    cues: DemoCue[];
+    localized?: boolean;
+    /** false = FSD tenhle záběr při průjezdu přeskočí (ať jízda netrvá věčnost) */
+    fsd?: false;
+}
+
 export interface Project {
     title: string;
     kind: ProjectKind;
@@ -44,6 +75,8 @@ export interface Project {
     tags: string[];
     /** odkaz na běžící produkci (ne na repo — ta jsou většinou soukromá) */
     href?: string;
+    /** záznamy a screenshoty z produkce; první se přehrává jako náhled */
+    demos?: DemoItem[];
 }
 
 export interface ExperienceEntry {
@@ -140,6 +173,23 @@ export const projects: Project[] = [
         descKey: "projects.workmux.desc",
         tags: ["TypeScript", "Go", "Docker", "Electron"],
         href: "https://www.workmux.com",
+        demos: [
+            {
+                type: "image", src: "/demos/workmux/diagram", aspect: 1040 / 600, captionKey: "demo.workmux.diagram", localized: true,
+                cues: [
+                    {say: "fsd.say.demo-workmux-diagram-1", box: [5, 36, 29, 29]},
+                    {say: "fsd.say.demo-workmux-diagram-2", box: [44, 11, 52, 49]},
+                    {say: "fsd.say.demo-workmux-diagram-3", box: [44, 62, 52, 28]},
+                ],
+            },
+            {
+                type: "image", src: "/demos/workmux/landing", aspect: 1440 / 900, captionKey: "demo.workmux.landing", localized: true,
+                cues: [
+                    {say: "fsd.say.demo-workmux-landing-1", box: [9, 62, 40, 10]},
+                    {say: "fsd.say.demo-workmux-landing-2"},
+                ],
+            },
+        ],
     },
     {
         title: "Drive",
@@ -147,6 +197,36 @@ export const projects: Project[] = [
         descKey: "projects.drive.desc",
         tags: ["Three.js", "WebGL", "OpenStreetMap", "Multiplayer"],
         href: "https://drive.in.workmux.com/",
+        demos: [
+            {
+                type: "video", src: "/demos/drive/flyover", aspect: 16 / 9, captionKey: "demo.drive.flyover",
+                cues: [
+                    {at: 0.5, say: "fsd.say.demo-drive-flyover-1"},
+                    {at: 6, say: "fsd.say.demo-drive-flyover-2"},
+                    {at: 13, say: "fsd.say.demo-drive-flyover-3", box: [0, 45, 100, 55]},
+                    {at: 18.5, say: "fsd.say.demo-drive-flyover-4", box: [42, 16, 22, 26]},
+                    {at: 22.5, say: "fsd.say.demo-drive-flyover-5"},
+                ],
+            },
+            {
+                type: "image", src: "/demos/drive/shot-1", aspect: 16 / 9, captionKey: "demo.drive.shot1",
+                cues: [
+                    {say: "fsd.say.demo-drive-shot1-1", box: [25, 25, 50, 50]},
+                ],
+            },
+            {
+                type: "image", src: "/demos/drive/shot-2", aspect: 16 / 9, captionKey: "demo.drive.shot2", fsd: false,
+                cues: [
+                    {say: "fsd.say.demo-drive-shot2-1", box: [0, 20, 70, 80]},
+                ],
+            },
+            {
+                type: "image", src: "/demos/drive/shot-3", aspect: 16 / 9, captionKey: "demo.drive.shot3", fsd: false,
+                cues: [
+                    {say: "fsd.say.demo-drive-shot3-1", box: [15, 45, 70, 55]},
+                ],
+            },
+        ],
     },
     {
         title: "Worldee",
@@ -163,11 +243,40 @@ export const projects: Project[] = [
         href: "https://www.npmjs.com/package/ironbean",
     },
     {
-        // zatím není venku — bez odkazu
         title: "OverCup",
         kind: "game",
         descKey: "projects.overcup.desc",
         tags: ["Next.js 15", "React 19", "socket.io", "Redis", "MySQL"],
+        href: "https://www.overcup.net/",
+        demos: [
+            {
+                type: "video", src: "/demos/overcup/piskvorky", aspect: 1280 / 800, captionKey: "demo.overcup.piskvorky",
+                cues: [
+                    {at: 0.5, say: "fsd.say.demo-overcup-piskvorky-1", box: [0, 28, 77, 72]},
+                    {at: 6, say: "fsd.say.demo-overcup-piskvorky-2"},
+                    {at: 13.5, say: "fsd.say.demo-overcup-piskvorky-3", box: [77, 10, 23, 12]},
+                    {at: 17.6, say: "fsd.say.demo-overcup-piskvorky-4", box: [2, 48, 22, 11]},
+                    {at: 21, say: "fsd.say.demo-overcup-piskvorky-5", box: [17, 16, 43, 64]},
+                    {at: 30, say: "fsd.say.demo-overcup-piskvorky-6", box: [0, 17, 77, 83]},
+                    {at: 33, say: "fsd.say.demo-overcup-piskvorky-7", box: [77, 18, 23, 22]},
+                ],
+            },
+            {
+                type: "video", src: "/demos/overcup/sachy", aspect: 1280 / 800, captionKey: "demo.overcup.sachy",
+                cues: [
+                    {at: 1.5, say: "fsd.say.demo-overcup-sachy-1", box: [14, 21, 50, 67]},
+                    {at: 6, say: "fsd.say.demo-overcup-sachy-2", box: [14, 21, 50, 67]},
+                    {at: 12, say: "fsd.say.demo-overcup-sachy-3", box: [32, 26, 20, 22]},
+                    {at: 15.5, say: "fsd.say.demo-overcup-sachy-4", box: [0, 22, 77, 78]},
+                ],
+            },
+            {
+                type: "image", src: "/demos/overcup/lobby", aspect: 1440 / 900, captionKey: "demo.overcup.lobby", fsd: false,
+                cues: [
+                    {say: "fsd.say.demo-overcup-lobby-1", box: [78, 0, 22, 36]},
+                ],
+            },
+        ],
     },
     {
         // zatím není venku — bez odkazu
