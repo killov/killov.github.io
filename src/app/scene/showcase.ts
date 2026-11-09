@@ -636,6 +636,115 @@ function overcup(labels: string[]): Showcase {
     };
 }
 
+// --- Nowity: změny z Postgresu tečou po transakcích přes sync engine do živých MobX objektů ---
+function nowity(labels: string[]): Showcase {
+    const group = new THREE.Group();
+    const parts: THREE.Object3D[] = [];
+
+    // PostgreSQL — zdroj pravdy
+    const pg = new THREE.Group();
+    pg.position.set(-6, -0.4, 0);
+    for (let i = 0; i < 3; i++) {
+        const c = edges(new THREE.CylinderGeometry(1.1, 1.1, 0.7, 24, 1), BLUE, 0.9);
+        c.position.y = i * 0.85 - 0.85;
+        pg.add(c);
+    }
+    pg.add(new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 2.4, 24), additive(BLUE, 0.08)));
+    group.add(withDelay(pg, 0));
+    parts.push(pg);
+
+    // sync engine: dotazy + oprávnění
+    const engine = new THREE.Group();
+    engine.add(edges(new THREE.OctahedronGeometry(1.1, 0), CYAN, 1));
+    engine.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.55, 0), additive(CYAN, 0.35)));
+    group.add(withDelay(engine, 0.3));
+    parts.push(engine);
+
+    // dva prohlížeče, v každém mřížka živých objektů
+    const cells: THREE.Mesh[][] = [];
+    const browsers = [v(5.6, 2, 0), v(5.6, -2.2, 0)].map((p, i) => {
+        const b = new THREE.Group();
+        b.position.copy(p);
+        b.add(edges(new THREE.BoxGeometry(3.6, 2.6, 0.1), i ? MINT : CYAN, 0.9));
+        b.add(line([v(-1.8, 0.95, 0.06), v(1.8, 0.95, 0.06)], i ? MINT : CYAN, 0.6));
+        const row: THREE.Mesh[] = [];
+        for (let x = 0; x < 4; x++) {
+            for (let y = 0; y < 2; y++) {
+                const m = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.55, 0.12), additive(i ? MINT : CYAN, 0.25));
+                m.position.set(-1.2 + x * 0.8, 0.3 - y * 0.8, 0.08);
+                b.add(m);
+                row.push(m);
+            }
+        }
+        cells.push(row);
+        group.add(withDelay(b, 0.6 + i * 0.2));
+        parts.push(b);
+        const l = withDelay(line([engine.position, p], CYAN, 0.3), 0.8 + i * 0.2);
+        group.add(l);
+        parts.push(l);
+        return b;
+    });
+    const feed = withDelay(line([pg.position, engine.position], BLUE, 0.4), 0.5);
+    group.add(feed);
+    parts.push(feed);
+
+    // transakce = balík tří patchů, letí pohromadě
+    const batches = [0, 1].map((i) => {
+        const g = new THREE.Group();
+        for (let k = 0; k < 3; k++) {
+            const m = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), additive(k === 1 ? MINT : CYAN, 1));
+            m.position.set((k - 1) * 0.3, 0, 0);
+            g.add(m);
+        }
+        group.add(g);
+        return {g, phase: i * 0.5, lit: -1};
+    });
+    // optimistický zápis z prohlížeče zpět na server
+    const write = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), additive(ORANGE, 1));
+    group.add(write);
+    const flash = cells.map((row) => row.map(() => 0));
+    const rnd = seeded(11);
+
+    placeLabels(group, parts, labels, [v(-6, 2, 0), v(5.6, 4.1, 0), v(0, -2.6, 1.4)], 1.1);
+
+    return {
+        group,
+        update(t, dt) {
+            assemble(parts, t);
+            engine.rotation.y = t * 0.8;
+            engine.rotation.x = Math.sin(t * 0.6) * 0.3;
+            for (const b of batches) {
+                const k = (t * 0.35 + b.phase) % 1;
+                const cycle = Math.floor(t * 0.35 + b.phase);
+                if (k < 0.45) {
+                    b.g.position.lerpVectors(pg.position, engine.position, k / 0.45);
+                    b.g.scale.setScalar(1);
+                } else {
+                    // engine pošle celý balík prohlížeči, který ten dotaz odebírá
+                    const q = (k - 0.45) / 0.55;
+                    b.g.position.lerpVectors(engine.position, browsers[cycle % 2].position, q);
+                    b.g.scale.setScalar(1 - q * 0.3);
+                    if (q > 0.95 && b.lit !== cycle) {
+                        b.lit = cycle;
+                        const c = Math.floor(rnd() * 8);
+                        flash[cycle % 2][c] = 1;
+                    }
+                }
+                b.g.visible = t > 1.2;
+            }
+            const w = (t * 0.25) % 1;
+            write.position.lerpVectors(browsers[1].position, engine.position, w);
+            write.visible = t > 2 && w < 0.95;
+            cells.forEach((row, i) => row.forEach((m, j) => {
+                flash[i][j] = Math.max(0, flash[i][j] - dt * 1.5);
+                (m.material as THREE.MeshBasicMaterial).opacity = 0.2 + flash[i][j] * 0.8;
+                m.scale.z = 1 + flash[i][j] * 3;
+            }));
+        },
+        dispose: () => disposeGroup(group),
+    };
+}
+
 // --- Stack: backend — request propadne vrstvami PHP/Nette a vrátí se ---
 function stackBackend(labels: string[]): Showcase {
     const group = new THREE.Group();
@@ -1561,6 +1670,7 @@ const BUILDERS: Record<string, (labels: string[], image?: string) => Showcase> =
     workmux,
     ironbean,
     overcup,
+    nowity,
     armygame,
     worldee,
     drive,

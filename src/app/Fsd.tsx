@@ -38,6 +38,7 @@ const ROUTE: FsdStep[] = [
     {station: station("projects"), say: "fsd.say.worldee", open: project("Worldee")},
     {station: station("projects"), say: "fsd.say.workmux", open: project("WorkMux"), demo: true},
     {station: station("projects"), say: "fsd.say.drive", open: project("Drive"), demo: true},
+    {station: station("projects"), say: "fsd.say.nowity", open: project("Nowity")},
     {station: station("projects"), say: "fsd.say.overcup", open: project("OverCup"), demo: true},
     {station: station("experience"), say: "fsd.say.experience"},
     {station: station("education"), say: "fsd.say.education", place: "up"},

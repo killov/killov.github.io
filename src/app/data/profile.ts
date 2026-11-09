@@ -4,7 +4,7 @@
  */
 
 export type StackLevel = "expert" | "strong";
-export type ProjectKind = "work" | "oss" | "ai" | "game";
+export type ProjectKind = "work" | "oss" | "ai" | "game" | "framework";
 
 export interface ProfileLinks {
     emails: string[];
@@ -175,18 +175,29 @@ export const projects: Project[] = [
         href: "https://www.workmux.com",
         demos: [
             {
-                type: "image", src: "/demos/workmux/diagram", aspect: 1040 / 600, captionKey: "demo.workmux.diagram", localized: true,
+                type: "video", src: "/demos/workmux/product", aspect: 16 / 9, captionKey: "demo.workmux.product",
                 cues: [
-                    {say: "fsd.say.demo-workmux-diagram-1", box: [5, 36, 29, 29]},
-                    {say: "fsd.say.demo-workmux-diagram-2", box: [44, 11, 52, 49]},
-                    {say: "fsd.say.demo-workmux-diagram-3", box: [44, 62, 52, 28]},
+                    {at: 0.5, say: "fsd.say.demo-workmux-product-1"},
+                    {at: 4.6, say: "fsd.say.demo-workmux-product-2", box: [0, 8, 18, 72]},
+                    {at: 10.5, say: "fsd.say.demo-workmux-product-3", box: [0, 24, 100, 54]},
+                    {at: 17.2, say: "fsd.say.demo-workmux-product-4"},
+                    {at: 25.5, say: "fsd.say.demo-workmux-product-5"},
+                    {at: 36.5, say: "fsd.say.demo-workmux-product-6", box: [4, 30, 48, 55]},
+                    {at: 45, say: "fsd.say.demo-workmux-product-7", box: [15, 0, 22, 100]},
+                    {at: 53, say: "fsd.say.demo-workmux-product-8"},
                 ],
             },
             {
                 type: "image", src: "/demos/workmux/landing", aspect: 1440 / 900, captionKey: "demo.workmux.landing", localized: true,
                 cues: [
-                    {say: "fsd.say.demo-workmux-landing-1", box: [9, 62, 40, 10]},
-                    {say: "fsd.say.demo-workmux-landing-2"},
+                    {say: "fsd.say.demo-workmux-landing-1", box: [9, 36, 82, 64]},
+                    {say: "fsd.say.demo-workmux-landing-2", box: [9, 17, 82, 18]},
+                ],
+            },
+            {
+                type: "image", src: "/demos/workmux/compare", aspect: 1440 / 600, captionKey: "demo.workmux.compare", localized: true, fsd: false,
+                cues: [
+                    {say: "fsd.say.demo-workmux-compare-1", box: [9, 57, 82, 34]},
                 ],
             },
         ],
@@ -241,6 +252,12 @@ export const projects: Project[] = [
         descKey: "projects.ironbean.desc",
         tags: ["TypeScript", "DI", "OSS"],
         href: "https://www.npmjs.com/package/ironbean",
+    },
+    {
+        title: "Nowity",
+        kind: "framework",
+        descKey: "projects.nowity.desc",
+        tags: ["TypeScript", "PostgreSQL", "MobX", "Next.js", "WebSocket"],
     },
     {
         title: "OverCup",

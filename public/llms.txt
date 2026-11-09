@@ -13,7 +13,7 @@ Teď jsem hodně přesedlal na AI a snažím se překonávat její limity.
 Přes 6 let držím celou vertikálu produkčního travel monolitu Worldee — PHP/Nette
 backend, React/MobX + Next.js frontend, C#/.NET mikroservices.
 
-Vedle toho stavím WorkMux (cloudový AI orchestrátor pro vývojáře) a hru Drive
+Vedle toho stavím WorkMux (AI agenti, každý s vlastním Docker Compose stackem) a hru Drive
 (multiplayer 3D jízda po skutečném Česku v prohlížeči).
 
 ## Contact
@@ -35,13 +35,14 @@ PostgreSQL, Redis, ScyllaDB, Prisma, Claude Code, MCP servery, Gemini, WorkMux.
 
 ## Projects (live)
 
-- [WorkMux](https://www.workmux.com) — AI orchestrátor pro vývojáře: izolované Docker session, web terminály, Claude Code, Go agent přes mTLS, Electron
+- [WorkMux](https://www.workmux.com) — každý AI agent (Claude Code, Codex) má vlastní stack: kopii repa, kontejnery a Docker Compose služby na vlastním stroji, ovládané z prohlížeče i mobilu; review diffů jako pull request, Go agent přes mTLS, Electron
 - [Drive](https://drive.in.workmux.com/) — multiplayer 3D jízda v prohlížeči po Česku z OpenStreetMap a reálného terénu, živé město s MHD
 - [Worldee](https://www.worldee.com) — produkční travel platforma, hlavní backend vývojář (8 381 commitů od 2020)
 - [Ironbean](https://www.npmjs.com/package/ironbean) — DI knihovna pro TS/JS na npm, 7⭐, 455 commitů za 6 let
 
 ## Projects (not released yet)
 
+- Nowity — realtime framework nad PostgreSQL, Ironbeanem a Next.js: změny z DB jako patche po transakcích do živých MobX objektů, oprávnění v dotazech, optimistické zápisy; staví na něm multi-tenant CMS Nowity Space (soukromé repo)
 - [OverCup](https://www.overcup.net/) — realtime portál pro 2 hráče s 32 hrami (šachy, Go, reversi, Uno…); Next.js 15, socket.io, Redis, MySQL, Elo žebříček
 - ArmyGame — online strategická hra v prohlížeči (PHP, WebSocket, WebGL)
 

@@ -60,6 +60,7 @@ const projectKindClass: Record<ProjectKind, string> = {
     oss: style.kindOss,
     ai: style.kindAi,
     game: style.kindGame,
+    framework: style.kindFramework,
 };
 
 const projectId = (title: string) => title.toLowerCase();
@@ -236,7 +237,7 @@ const MachineReadableProfile: React.FC = () => {
                 <strong>Strong:</strong> C#/.NET, React, MobX, Next.js, AWS, Docker, MySQL, PostgreSQL, Redis, ScyllaDB.
             </p>
             <p>
-                <strong>Vlastní projekty:</strong> WorkMux (cloudový AI orchestrátor pro vývojáře, www.workmux.com), Drive (multiplayer 3D jízda po Česku, drive.in.workmux.com), Ironbean (DI knihovna na npm, 7⭐), OverCup (online deskovky pro dva, www.overcup.net), ArmyGame (online strategie, zatím nevydaná).
+                <strong>Vlastní projekty:</strong> WorkMux (AI agenti, každý s vlastním Docker Compose stackem na vlastním stroji, www.workmux.com), Drive (multiplayer 3D jízda po Česku, drive.in.workmux.com), Ironbean (DI knihovna na npm, 7⭐), Nowity (realtime framework nad PostgreSQL a MobX, na něm multi-tenant CMS Nowity Space), OverCup (online deskovky pro dva, www.overcup.net), ArmyGame (online strategie, zatím nevydaná).
             </p>
             <p>
                 <strong>Kontakt:</strong> z.mazurak35@gmail.com · github.com/killov.

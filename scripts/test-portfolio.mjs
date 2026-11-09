@@ -62,7 +62,7 @@ await check("desktop: let po zastávkách + obsah + i18n", async () => {
             throw new Error(`${gone} by neměl být přítomen`);
         }
     }
-    for (const title of ["WorkMux", "Worldee", "ArmyGame", "OverCup"]) {
+    for (const title of ["WorkMux", "Worldee", "ArmyGame", "OverCup", "Nowity"]) {
         if ((await page.locator("h3", {hasText: title}).count()) < 1) throw new Error(`Chybí projekt ${title}`);
     }
     if ((await page.locator('a[href*="Worldee-com/web_react-php"]').count()) < 1) throw new Error("Chybí GitHub link u Worldee");
