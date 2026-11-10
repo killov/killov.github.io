@@ -318,6 +318,17 @@ export const messages: Record<Lang, Dict> = {
 
         // vesmírná hra
         "hud.game": "Hra",
+        // VR režim (WebXR)
+        "hud.vr": "VR",
+        "hud.vr.title": "Vstoupit do VR — planety a CV kolem tebe",
+        "vr.hint": "Ukaž ovladačem na panel a zmáčkni spoušť — přijede blíž. Páčka doleva/doprava = otočení, nahoru/dolů = rychlost času. Pod tebou svítí Slunce, kolem obíhají planety na skutečných pozicích.",
+        "vr.exit": "Odejít",
+        "vr.failed": "VR se nepodařilo spustit",
+        "vr.speed.pause": "Pauza",
+        "vr.speed.h": "1 h/s",
+        "vr.speed.d": "1 den/s",
+        "vr.speed.w": "1 týden/s",
+        "vr.speed.m": "1 měsíc/s",
         // FSD — autopilot průvodce webem
         "fsd.title": "FSD · Autopilot",
         "fsd.hint": "FSD — autopilot tě proveze webem (F)",
@@ -682,6 +693,16 @@ export const messages: Record<Lang, Dict> = {
         "sc.about-stars.b3": "Open-source DI library for TypeScript",
 
         "hud.game": "Play",
+        "hud.vr": "VR",
+        "hud.vr.title": "Enter VR — planets and my CV all around you",
+        "vr.hint": "Point at a panel and pull the trigger — it moves closer. Thumbstick left/right = turn, up/down = time speed. The Sun glows beneath you and the planets orbit around at their real positions.",
+        "vr.exit": "Exit",
+        "vr.failed": "Could not start VR",
+        "vr.speed.pause": "Paused",
+        "vr.speed.h": "1 h/s",
+        "vr.speed.d": "1 day/s",
+        "vr.speed.w": "1 week/s",
+        "vr.speed.m": "1 month/s",
         // FSD — autopilot tour of the site
         "fsd.title": "FSD · Autopilot",
         "fsd.hint": "FSD — the autopilot drives you through the site (F)",

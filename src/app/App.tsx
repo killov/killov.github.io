@@ -26,6 +26,8 @@ import {STATIONS, VH_PER_STATION, holdAtStations, readTrack, stationScroll, Pane
 import type {CityCommand, FrameState, GameCommand, PanelLayout, Universe} from "./scene/Universe";
 import {placeById, places} from "./data/places";
 import type {GameEvent, GameFocus, GameTarget} from "./scene/solar";
+import type {VrWorld} from "./scene/vr";
+import {vrPanels} from "./vrContent";
 
 /*
  * Web jako let kolem holografické Země. Stránka se fyzicky scrolluje
@@ -93,6 +95,9 @@ const N3 = [1, 2, 3];
 
 // three.js (velký chunk) se začne stahovat hned při načtení modulu, souběžně s hydratací
 const universeModule = typeof window === "undefined" ? null : import("./scene/Universe");
+
+/** ?vr=preview — VR scéna v okně bez headsetu (vývoj, testy) */
+const vrPreview = () => new URLSearchParams(window.location.search).get("vr") === "preview";
 
 /** na dotykovém displeji nápověda bez myši a klávesnice (klíč + ".touch") */
 const touchKey = (key: string) =>
@@ -577,6 +582,10 @@ function Experience() {
     const [active, setActive] = useState(0);
     const [showcase, setShowcase] = useState<ShowcaseKey | null>(null);
     const [game, setGame] = useState(false);
+    /** VR modul je načtený a headset ho umí (jinak tlačítko není vidět) */
+    const [vrReady, setVrReady] = useState(false);
+    const vrModRef = useRef<typeof import("./scene/vr") | null>(null);
+    const vrRef = useRef<VrWorld | null>(null);
     const [toast, setToast] = useState<{id: number; text: string; kind: GameEvent["kind"]} | null>(null);
     const activeRef = useRef(0);
     /** kolik px textu se do panelu nevejde (dočítá se scrollem stránky) */
@@ -713,6 +722,44 @@ function Experience() {
         setGame(false);
         setToast(null);
         document.documentElement.style.overflow = "";
+    }, []);
+
+    /** WebXR: requestSession musí padnout přímo do kliknutí, proto je modul předem načtený */
+    const enterVr = useCallback(() => {
+        const mod = vrModRef.current;
+        if (!mod || vrRef.current) return;
+        const world = new mod.VrWorld({
+            panels: vrPanels(tRef.current),
+            text: tRef.current,
+            locale: langRef.current === "cs" ? "cs-CZ" : "en-GB",
+            preview: vrPreview(),
+            onEnd: () => {
+                vrRef.current = null;
+            },
+        });
+        vrRef.current = world;
+        world.enter().catch((err) => {
+            console.warn(tRef.current("vr.failed"), err);
+            world.dispose();
+            vrRef.current = null;
+        });
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        const xr = navigator.xr;
+        const supported = vrPreview() ? Promise.resolve(true)
+            : xr ? xr.isSessionSupported("immersive-vr").catch(() => false) : Promise.resolve(false);
+        supported.then((ok) => (ok && !cancelled ? import("./scene/vr") : null)).then((mod) => {
+            if (!mod || cancelled) return;
+            vrModRef.current = mod;
+            setVrReady(true);
+        });
+        return () => {
+            cancelled = true;
+            vrRef.current?.dispose();
+            vrRef.current = null;
+        };
     }, []);
 
     const openPlace = useCallback((id: string) => {
@@ -1083,6 +1130,11 @@ function Experience() {
                     <button type="button" className={style.gameBtn} onClick={enterGame} aria-keyshortcuts="G">
                         <span aria-hidden="true">🚀</span> {t("hud.game")}
                     </button>
+                    {vrReady && (
+                        <button type="button" className={`${style.gameBtn} ${style.vrBtn}`} onClick={enterVr} title={t("hud.vr.title")}>
+                            <span aria-hidden="true">🥽</span> {t("hud.vr")}
+                        </button>
+                    )}
                     <button type="button" className={style.soundBtn} onClick={toggleSound} aria-pressed={sound} title={t("tf.sound")}>
                         <span aria-hidden="true">{sound ? "🔊" : "🔇"}</span> {t("tf.sound")}
                     </button>

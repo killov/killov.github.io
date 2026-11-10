@@ -2020,6 +2020,24 @@ $mobile: 800px;
     50% { box-shadow: 0 0 18px rgba(255, 179, 92, 0.45); }
 }
 
+/* jen s headsetem (WebXR immersive-vr) */
+.vrBtn {
+    border-color: rgba(110, 242, 192, 0.7);
+    background: rgba(110, 242, 192, 0.1);
+    color: #9ff7d6;
+    animation-name: vrPulse;
+
+    &:hover,
+    &:focus-visible {
+        background: rgba(110, 242, 192, 0.24);
+    }
+}
+
+@keyframes vrPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(110, 242, 192, 0); }
+    50% { box-shadow: 0 0 18px rgba(110, 242, 192, 0.45); }
+}
+
 .layout[data-game="true"] {
     .stage,
     .overlay,

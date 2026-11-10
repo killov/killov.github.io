@@ -21,7 +21,7 @@ const MOON_R = 2.7;
 const GM = 1.25e6;
 const MAX_PULL = 42;
 const LAUNCH_K = 4.2;
-const DEG = Math.PI / 180;
+export const DEG = Math.PI / 180;
 const J2000 = Date.UTC(2000, 0, 1, 12);
 
 export type GameFocus = "earth" | "sun" | "system";
@@ -43,7 +43,7 @@ export interface GameHud {
     event: GameEvent | null;
 }
 
-interface PlanetDef {
+export interface PlanetDef {
     id: GameTarget;
     a: number; // velká poloosa v AU
     L0: number; // střední délka v J2000 (°)
@@ -61,7 +61,7 @@ const GM_MOON = 2.5e3;
 /** změkčení, ať průlet těsně kolem planety nevystřelí rychlost do nekonečna */
 const SOFTEN = 36;
 
-const PLANETS: PlanetDef[] = [
+export const PLANETS: PlanetDef[] = [
     {id: "mercury", a: 0.387, L0: 252.25, rate: 4.09233, radius: 3.2, color: 0x9c8f86, color2: 0x5d5550, bands: 0, gm: 1.4e4},
     {id: "venus", a: 0.723, L0: 181.98, rate: 1.60213, radius: 7.4, color: 0xe8c98a, color2: 0xb98c4c, bands: 6, gm: 5.5e4},
     {id: "mars", a: 1.524, L0: 355.43, rate: 0.52403, radius: 5.2, color: 0xd2643a, color2: 0x7a3420, bands: 0, gm: 2.2e4},
@@ -72,7 +72,7 @@ const PLANETS: PlanetDef[] = [
 /** stlačení vzdáleností: vnitřní planety skoro reálně, vnější blíž */
 const orbitRadius = (a: number) => AU * Math.pow(a, 0.62);
 
-const days = (ms: number) => (ms - J2000) / 86400000;
+export const days = (ms: number) => (ms - J2000) / 86400000;
 
 /** heliocentrická poloha v rovině ekliptiky (x = 0°, -z = 90°, jako latLonToVec) */
 function helio(L: number, dist: number, out = new THREE.Vector3()) {
@@ -129,7 +129,7 @@ void main() {
 }
 `;
 
-function bodyMaterial(color: number, color2: number, bands: number, sunPos: THREE.Vector3): THREE.ShaderMaterial {
+export function bodyMaterial(color: number, color2: number, bands: number, sunPos: THREE.Vector3): THREE.ShaderMaterial {
     return new THREE.ShaderMaterial({
         transparent: true,
         uniforms: {
@@ -168,7 +168,7 @@ function bodyMaterial(color: number, color2: number, bands: number, sunPos: THRE
     });
 }
 
-function sunMaterial(): THREE.ShaderMaterial {
+export function sunMaterial(): THREE.ShaderMaterial {
     return new THREE.ShaderMaterial({
         transparent: true,
         uniforms: {uTime: {value: 0}, uOpacity: {value: 1}, uHeat: {value: 0}},
@@ -194,7 +194,7 @@ function sunMaterial(): THREE.ShaderMaterial {
     });
 }
 
-function glowTexture(inner: string, outer: string): THREE.CanvasTexture {
+export function glowTexture(inner: string, outer: string): THREE.CanvasTexture {
     const c = document.createElement("canvas");
     c.width = c.height = 256;
     const ctx = c.getContext("2d")!;
